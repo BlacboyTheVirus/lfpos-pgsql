@@ -1,0 +1,20 @@
+{
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "/Users/abisoyeodeyemi/Library/Application Support/Herd/bin/php84",
+            "args": [
+                "/Users/abisoyeodeyemi/Herd/lfpos_pgsql/artisan",
+                "boost:mcp"
+            ]
+        },
+        "herd": {
+            "command": "/Users/abisoyeodeyemi/Library/Application Support/Herd/bin/php84",
+            "args": [
+                "/Applications/Herd.app/Contents/Resources/herd-mcp.phar"
+            ],
+            "env": {
+                "SITE_PATH": "/Users/abisoyeodeyemi/Herd/lfpos_pgsql"
+            }
+        }
+    }
+}

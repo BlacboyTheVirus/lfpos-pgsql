@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Settings\Tables;
 
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -35,14 +36,15 @@ class SettingsTable
 
                 TextColumn::make('value')
                     ->label('Value')
-                    ->limit(50)
+                    ->wrap()
+                    ->lineClamp(3)
                     ->tooltip(function (TextColumn $column): ?string {
                         $state = $column->getState();
 
                         // Convert arrays to JSON for length checking
                         $stateString = is_array($state) ? json_encode($state, JSON_PRETTY_PRINT) : (string) $state;
 
-                        if (strlen($stateString) <= 50) {
+                        if (strlen($stateString) <= 100) {
                             return null;
                         }
 
@@ -54,9 +56,7 @@ class SettingsTable
                         }
 
                         return $state;
-                    })
-                    ->badge()
-                    ->color(fn ($state) => self::getValueColor($state)),
+                    }),
 
                 TextColumn::make('category')
                     ->label('Category')
@@ -123,42 +123,44 @@ class SettingsTable
                     ),
             ])
             ->recordActions([
-                ViewAction::make()
-                    ->slideOver()
-                    ->modalWidth('md')
-                    ->color('info')
-                    ->infolist(\App\Filament\Resources\Settings\Schemas\SettingInfolist::getInfolistComponents()),
+                ActionGroup::make([
+                    ViewAction::make()
+                        ->slideOver()
+                        ->modalWidth('md')
+                        ->color('info')
+                        ->infolist(\App\Filament\Resources\Settings\Schemas\SettingInfolist::getInfolistComponents()),
 
-                EditAction::make()
-                    ->slideOver()
-                    ->modalWidth('md')
-                    ->color('warning')
-                    ->form(\App\Filament\Resources\Settings\Schemas\SettingForm::getFormComponents())
-                    ->mutateFormDataUsing(fn ($record) => $record->toArray())
-                    ->action(function (array $data, $record) {
-                        $processedData = \App\Filament\Resources\Settings\Schemas\SettingForm::mutateFormDataBeforeSave($data);
-                        $record->update($processedData);
-                    })
-                    ->successNotificationTitle('Setting updated successfully'),
+                    EditAction::make()
+                        ->slideOver()
+                        ->modalWidth('md')
+                        ->color('warning')
+                        ->form(\App\Filament\Resources\Settings\Schemas\SettingForm::getFormComponents())
+                        ->mutateFormDataUsing(fn ($record) => $record->toArray())
+                        ->action(function (array $data, $record) {
+                            $processedData = \App\Filament\Resources\Settings\Schemas\SettingForm::mutateFormDataBeforeSave($data);
+                            $record->update($processedData);
+                        })
+                        ->successNotificationTitle('Setting updated successfully'),
 
-                Action::make('reset')
-                    ->label('Reset')
-                    ->icon(Heroicon::OutlinedArrowPath)
-                    ->color('danger')
-                    ->requiresConfirmation()
-                    ->modalHeading('Reset Setting')
-                    ->modalDescription('Are you sure you want to reset this setting to its default value?')
-                    ->action(function ($record) {
-                        // Reset logic would go here
-                        // You could implement default value lookup
-                    })
-                    ->visible(fn ($record) => self::canReset($record->name)),
+                    Action::make('reset')
+                        ->label('Reset')
+                        ->icon(Heroicon::OutlinedArrowPath)
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Reset Setting')
+                        ->modalDescription('Are you sure you want to reset this setting to its default value?')
+                        ->action(function ($record) {
+                            // Reset logic would go here
+                            // You could implement default value lookup
+                        })
+                        ->visible(fn ($record) => self::canReset($record->name)),
 
-                DeleteAction::make()
-                    ->requiresConfirmation()
-                    ->modalHeading('Delete Setting')
-                    ->modalDescription('Are you sure you want to delete this setting? This action cannot be undone.')
-                    ->visible(fn ($record) => self::canDelete($record->name)),
+                    DeleteAction::make()
+                        ->requiresConfirmation()
+                        ->modalHeading('Delete Setting')
+                        ->modalDescription('Are you sure you want to delete this setting? This action cannot be undone.')
+                        ->visible(fn ($record) => self::canDelete($record->name)),
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

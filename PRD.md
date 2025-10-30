@@ -307,6 +307,7 @@ Must be responsive and usable on mobile or small screen with horizontal scroll
 - **Forms:** Professional form layouts with validation
 - **Modals:** Contextual actions and confirmations
 - **Notifications:** User feedback and system messages
+- **Money:** All money values should align to the right 
 
 #### 6.3.1 Enhanced Global Search
 - **Search Slide Effects:** 8px horizontal slide animation with green border

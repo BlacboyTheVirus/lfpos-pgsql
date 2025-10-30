@@ -7,8 +7,7 @@ enum ExpenseCategory: string
     case Miscellaneous = 'miscellaneous';
     case Materials = 'materials';
     case Utilities = 'utilities';
-    case Repairs = 'repairs';
-    case Cleaning = 'cleaning';
+    case RepairsAndCleaning = 'repairs_and_cleaning';
     case Staff = 'staff';
 
     public function getLabel(): string
@@ -17,8 +16,7 @@ enum ExpenseCategory: string
             self::Miscellaneous => 'Miscellaneous',
             self::Materials => 'Materials',
             self::Utilities => 'Utilities',
-            self::Repairs => 'Repairs & Maintenance',
-            self::Cleaning => 'Cleaning',
+            self::RepairsAndCleaning => 'Repairs & Cleaning',
             self::Staff => 'Staff',
         };
     }
@@ -27,11 +25,10 @@ enum ExpenseCategory: string
     {
         return match ($this) {
             self::Miscellaneous => 'gray',
-            self::Materials => 'blue',
-            self::Utilities => 'yellow',
-            self::Repairs => 'orange',
-            self::Cleaning => 'green',
-            self::Staff => 'purple',
+            self::Materials => 'success',
+            self::Utilities => 'warning',
+            self::RepairsAndCleaning => 'danger',
+            self::Staff => 'info',
         };
     }
 
@@ -48,8 +45,7 @@ enum ExpenseCategory: string
             self::Miscellaneous => 'heroicon-o-ellipsis-horizontal',
             self::Materials => 'heroicon-o-cube',
             self::Utilities => 'heroicon-o-bolt',
-            self::Repairs => 'heroicon-o-wrench-screwdriver',
-            self::Cleaning => 'heroicon-o-sparkles',
+            self::RepairsAndCleaning => 'heroicon-o-wrench-screwdriver',
             self::Staff => 'heroicon-o-users',
         };
     }

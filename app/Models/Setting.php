@@ -190,7 +190,7 @@ class Setting extends Model
     public static function formatMoney(int $amountInCents): string
     {
         $settings = static::getCurrencySettings();
-        $amount = $amountInCents / 100;
+        $amount = $amountInCents;
 
         $formatted = number_format(
             $amount,

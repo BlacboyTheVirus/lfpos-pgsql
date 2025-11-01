@@ -7,17 +7,17 @@ use App\Enums\PaymentType;
 use App\Models\Customer;
 use App\Models\Product;
 use Closure;
-use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
-use Icetalker\FilamentTableRepeater\Forms\Components\TableRepeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
+use Icetalker\FilamentTableRepeater\Forms\Components\TableRepeater;
 use NumberFormatter;
 
 class InvoiceForm
@@ -138,25 +138,11 @@ class InvoiceForm
 
                         Section::make('Invoice Items')
                             ->schema([
-                                Action::make('add_product')
-                                    ->label('Add Product')
-                                    ->icon('heroicon-o-plus')
-                                    ->color('primary')
-                                    ->action(function (callable $set, callable $get) {
-                                        $products = $get('products') ?? [];
-                                        $newProduct = [
-                                            'product_id' => null,
-                                            'product_name' => '',
-                                            'width' => 1.0,
-                                            'height' => 1.0,
-                                            'unit_price' => 200,
-                                            'quantity' => 1,
-                                            'product_amount' => '0',
-                                        ];
 
-                                        $products[] = $newProduct;
-                                        $set('products', $products);
-                                    }),
+                                View::make('filament.components.product-selector')
+                                    ->viewData([
+                                        'products' => Product::active()->get(),
+                                    ]),
 
                                 TableRepeater::make('products')
                                     ->label('')
@@ -181,47 +167,36 @@ class InvoiceForm
                                             ->required()
                                             ->live(debounce: 800)
                                             ->inputMode('decimal')
-                                            ->rules(['numeric', 'min:0.01'])
+                                            ->rules(['required', 'numeric', 'min:0.01', 'regex:/^\d+(\.\d{1,2})?$/'])
                                             ->validationMessages([
                                                 'min' => 'Width must be greater than 0.',
                                                 'numeric' => 'Width must be a valid number.',
+                                                'regex' => 'Width must be a valid decimal number.',
                                             ])
                                             ->afterStateUpdated(function (callable $set, callable $get) {
                                                 self::updateLineTotal($set, $get);
                                             })
-                                            ->extraAttributes([
-                                                'x-data' => '{
-                                                    init() {
-                                                        // Auto-focus when this field appears (new row)
-                                                        setTimeout(() => {
-                                                            const input = this.$el.querySelector("input");
-                                                            if (input && (!input.value || input.value === "1")) {
-                                                                input.focus();
-                                                                input.select();
-                                                                console.log("✅ Width field auto-focused");
-                                                            }
-                                                        }, 200);
-                                                    }
-                                                }',
-                                            ])
                                             ->extraInputAttributes([
                                                 'class' => 'text-right pr-0 sm:pr-3 md:pr-[25px] lg:pr-3 min-w-[120px] md:min-w-[180px]',
+                                                'data-filter' => 'decimal',
                                             ]),
 
                                         TextInput::make('height')
                                             ->required()
                                             ->live(debounce: 800)
                                             ->inputMode('decimal')
-                                            ->rules(['numeric', 'min:0.01'])
+                                            ->rules(['required', 'numeric', 'min:0.01', 'regex:/^\d+(\.\d{1,2})?$/'])
                                             ->validationMessages([
                                                 'min' => 'Height must be greater than 0.',
                                                 'numeric' => 'Height must be a valid number.',
+                                                'regex' => 'Height must be a valid decimal number.',
                                             ])
                                             ->afterStateUpdated(function (callable $set, callable $get) {
                                                 self::updateLineTotal($set, $get);
                                             })
                                             ->extraInputAttributes([
                                                 'class' => 'text-right pr-0 sm:pr-3 md:pr-[25px] lg:pr-3 min-w-[80px] md:min-w-[100px]',
+                                                'data-filter' => 'decimal',
                                             ]),
 
                                         TextInput::make('unit_price')
@@ -236,16 +211,18 @@ class InvoiceForm
                                             ->default(1)
                                             ->live(debounce: 800)
                                             ->inputMode('numeric')
-                                            ->rules(['integer', 'min:1'])
+                                            ->rules(['required', 'integer', 'min:1', 'regex:/^\d+$/'])
                                             ->validationMessages([
                                                 'min' => 'Quantity must be at least 1.',
                                                 'integer' => 'Quantity must be a whole number.',
+                                                'regex' => 'Quantity must contain only numbers.',
                                             ])
                                             ->afterStateUpdated(function (callable $set, callable $get) {
                                                 self::updateLineTotal($set, $get);
                                             })
                                             ->extraInputAttributes([
                                                 'class' => 'text-right pr-0 sm:pr-3 md:pr-[25px] lg:pr-3 min-w-[80px] md:min-w-[100px]',
+                                                'data-filter' => 'integer',
                                             ]),
 
                                         TextInput::make('product_amount')
@@ -325,27 +302,18 @@ class InvoiceForm
                                                             ->required()
                                                             ->live(debounce: 800)
                                                             ->inputMode('decimal')
-                                                            ->rules(['numeric', 'min:0.01'])
+                                                            ->rules(['required', 'numeric', 'min:0.01', 'regex:/^\d+(\.\d{1,2})?$/'])
+                                                            ->validationMessages([
+                                                                'min' => 'Amount must be greater than 0.',
+                                                                'numeric' => 'Amount must be a valid number.',
+                                                                'regex' => 'Amount must be a valid decimal number.',
+                                                            ])
                                                             ->afterStateUpdated(function (callable $set, callable $get) {
                                                                 self::updatePaymentTotals($set, $get);
                                                             })
-                                                            ->extraAttributes([
-                                                                'x-data' => '{
-                                                                    init() {
-                                                                        // Auto-focus when this field appears (new payment row)
-                                                                        setTimeout(() => {
-                                                                            const input = this.$el.querySelector("input");
-                                                                            if (input && !input.value && !input.disabled) {
-                                                                                input.focus();
-                                                                                input.select();
-                                                                                console.log("✅ Payment amount field auto-focused");
-                                                                            }
-                                                                        }, 200);
-                                                                    }
-                                                                }',
-                                                            ])
                                                             ->extraInputAttributes([
                                                                 'class' => 'text-right pr-0 sm:pr-3 md:pr-[25px] lg:pr-3 min-w-[100px] md:min-w-[120px]',
+                                                                'data-filter' => 'decimal',
                                                             ])
                                                             ->disabled(function (callable $get, $livewire) {
                                                                 // Make readonly if this is an existing payment in edit mode
@@ -484,12 +452,18 @@ class InvoiceForm
                                                     ->default(0)
                                                     ->live(debounce: 800)
                                                     ->inputMode('decimal')
-                                                    ->rules(['numeric', 'min:0'])
+                                                    ->rules(['nullable', 'numeric', 'min:0', 'regex:/^\d+(\.\d{1,2})?$/'])
+                                                    ->validationMessages([
+                                                        'min' => 'Discount must be 0 or greater.',
+                                                        'numeric' => 'Discount must be a valid number.',
+                                                        'regex' => 'Discount must be a valid decimal number.',
+                                                    ])
                                                     ->afterStateUpdated(function (callable $set, callable $get) {
                                                         self::updateTotals($set, $get);
                                                     })
                                                     ->extraInputAttributes([
                                                         'class' => 'text-right',
+                                                        'data-filter' => 'decimal',
                                                     ]),
 
                                                 TextInput::make('round_off')
@@ -603,7 +577,8 @@ class InvoiceForm
 
         // Convert amount to words
         $formatter = new NumberFormatter('en_NG', NumberFormatter::SPELLOUT);
-        $totalInWords = 'Naira '.ucwords($formatter->format($roundedAmount)).' only';
+        $amountInWords = $formatter->format($roundedAmount);
+        $totalInWords = ucwords($amountInWords).' Naira only';
         $set('total_in_words', $totalInWords);
 
         // Update payment totals

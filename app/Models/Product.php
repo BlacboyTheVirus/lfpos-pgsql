@@ -14,6 +14,7 @@ class Product extends Model
         'unit',
         'price',
         'minimum_amount',
+        'default_width',
         'description',
         'is_active',
         'created_by',
@@ -24,6 +25,7 @@ class Product extends Model
         return [
             'price' => MoneyCast::class,
             'minimum_amount' => MoneyCast::class,
+            'default_width' => 'decimal:2',
             'is_active' => 'boolean',
         ];
     }

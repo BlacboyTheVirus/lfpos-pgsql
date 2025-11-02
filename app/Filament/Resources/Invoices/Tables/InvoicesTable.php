@@ -35,8 +35,8 @@ class InvoicesTable
                     ->label('Customer')
                     ->sortable()
                     ->searchable()
-                    ->weight('medium')
-                    ->description(fn ($record) => $record->customer?->phone ?? null),
+                    ->weight('medium'),
+
 
                 TextColumn::make('date')
                     ->label('Invoice Date')

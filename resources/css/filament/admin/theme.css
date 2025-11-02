@@ -20,6 +20,10 @@ label[for="form.products"] {
     gap: 1px !important;
 }
 
+.it-table-repeater.products-table tbody tr td:first-child {
+    display: none !important;
+}
+
 /*div.it-table-repeater.payments-table div.px-4 table thead tr th:nth-child(1),*/
 /*div.it-table-repeater.products-table div.px-4 table thead tr th:nth-child(2),*/
 /*div.it-table-repeater.expenses-table div.px-4 table thead tr th:nth-child(3),*/

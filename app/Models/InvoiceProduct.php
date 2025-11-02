@@ -18,7 +18,7 @@ class InvoiceProduct extends Model
         'height',
         'quantity',
         'unit_price',
-        'total_price',
+        'product_amount',
     ];
 
     protected $casts = [
@@ -26,7 +26,7 @@ class InvoiceProduct extends Model
         'height' => 'decimal:2',
         'quantity' => 'integer',
         'unit_price' => MoneyCast::class,
-        'total_price' => MoneyCast::class,
+        'product_amount' => MoneyCast::class,
     ];
 
     protected static function boot()
@@ -36,7 +36,7 @@ class InvoiceProduct extends Model
         static::saving(function ($model) {
             $width = $model->width ?: 1;
             $height = $model->height ?: 1;
-            $model->total_price = $width * $height * $model->quantity * $model->unit_price;
+            $model->product_amount = $width * $height * $model->quantity * $model->unit_price;
         });
     }
 

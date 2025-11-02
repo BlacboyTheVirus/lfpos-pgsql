@@ -28,6 +28,11 @@ class MoneyCast implements CastsAttributes
      */
     public function set(Model $model, string $key, mixed $value, array $attributes): int
     {
+        // Clean formatted numbers (remove commas, spaces, currency symbols)
+        if (is_string($value)) {
+            $value = str_replace([',', ' ', '$', '₦'], '', $value);
+        }
+
         if (! is_numeric($value)) {
             throw new InvalidArgumentException('The value must be numeric.');
         }

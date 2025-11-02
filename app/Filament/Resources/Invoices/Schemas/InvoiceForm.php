@@ -147,14 +147,36 @@ class InvoiceForm
                                 TableRepeater::make('products')
                                     ->label('')
                                     ->relationship()
-                                    ->mutateRelationshipDataBeforeFillUsing(fn (array $data): array => static::mutateRelationshipDataBeforeFill(['products' => $data])['products'])
-                                    ->mutateRelationshipDataBeforeSaveUsing(fn (array $data): array => static::mutateRelationshipDataBeforeSave(['products' => $data])['products'])
+                                    ->mutateRelationshipDataBeforeFillUsing(function (array $data): array {
+                                        // MoneyCast already converts cents to dollars, no need to divide again
+
+                                        // Load product name from product_id
+                                        if (isset($data['product_id'])) {
+                                            $productModel = Product::find($data['product_id']);
+                                            if ($productModel) {
+                                                $data['product_name'] = $productModel->name;
+                                            }
+                                        }
+
+                                        return $data;
+                                    })
+                                    ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
+                                        // MoneyCast will handle conversion to cents, no need to multiply
+
+                                        // Remove display-only fields
+                                        unset($data['product_name']);
+
+                                        return $data;
+                                    })
                                     ->default([])
                                     ->minItems(1)
                                     ->extraAttributes([
                                         'class' => 'products-table',
                                     ])
                                     ->schema([
+
+                                        Hidden::make('product_id')
+                                            ->required(),
 
                                         TextInput::make('product_name')
                                             ->disabled()
@@ -258,8 +280,14 @@ class InvoiceForm
                                                 TableRepeater::make('payments')
                                                     ->label('')
                                                     ->relationship()
-                                                    ->mutateRelationshipDataBeforeFillUsing(fn (array $data): array => static::mutateRelationshipDataBeforeFill(['payments' => $data])['payments'])
-                                                    ->mutateRelationshipDataBeforeSaveUsing(fn (array $data): array => static::mutateRelationshipDataBeforeSave(['payments' => $data])['payments'])
+                                                    ->mutateRelationshipDataBeforeFillUsing(function (array $data): array {
+                                                        // MoneyCast already converts cents to dollars, no need to divide again
+                                                        return $data;
+                                                    })
+                                                    ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
+                                                        // MoneyCast will handle conversion to cents, no need to multiply
+                                                        return $data;
+                                                    })
                                                     ->default([])
                                                     ->minItems(0)
                                                     ->extraAttributes([
@@ -343,7 +371,7 @@ class InvoiceForm
                                                             return function (string $attribute, $value, Closure $fail) use ($get) {
                                                                 // Get form data
                                                                 $customerId = $get('customer_id');
-                                                                $invoiceTotal = (float) ($get('total') ?? 0);
+                                                                $invoiceTotal = self::parseNumeric($get('total') ?? 0);
                                                                 $paymentsData = $value ?? [];
 
                                                                 if (empty($customerId) || $invoiceTotal <= 0) {
@@ -488,6 +516,8 @@ class InvoiceForm
                                                     ->disabled()
                                                     ->dehydrated(false)
                                                     ->placeholder('Amount in words')
+                                                    ->autosize()
+                                                    ->rows(1)
                                                     ->extraAttributes(['class' => 'text-sm italic']),
 
                                                 Hidden::make('paid')
@@ -571,10 +601,10 @@ class InvoiceForm
         $roundedAmount = round($finalAmount / 100) * 100;
         $roundOff = $roundedAmount - $finalAmount;
 
-        // Set values
-        $set('subtotal', number_format($subtotal, 0, '.', ','));
-        $set('round_off', number_format($roundOff, 0, '.', ','));
-        $set('total', number_format($roundedAmount, 0, '.', ','));
+        // Set values (no comma formatting to avoid issues with MoneyCast)
+        $set('subtotal', number_format($subtotal, 0, '.', ''));
+        $set('round_off', number_format($roundOff, 0, '.', ''));
+        $set('total', number_format($roundedAmount, 0, '.', ''));
 
         // Convert amount to words
         $formatter = new NumberFormatter('en_NG', NumberFormatter::SPELLOUT);
@@ -635,8 +665,8 @@ class InvoiceForm
                     $product['product_amount'] = $product['product_amount'] / 100;
                 }
 
-                // Add product name for display
-                if (isset($product['product_id']) && empty($product['product_name'])) {
+                // Always load product name from product_id for display
+                if (isset($product['product_id'])) {
                     $productModel = Product::find($product['product_id']);
                     if ($productModel) {
                         $product['product_name'] = $productModel->name;

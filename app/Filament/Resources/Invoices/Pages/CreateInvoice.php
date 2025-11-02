@@ -14,7 +14,7 @@ class CreateInvoice extends CreateRecord
     public function addProductToForm($productId, $productName, $unitPrice, $defaultWidth): void
     {
         $currentProducts = $this->data['products'] ?? [];
-        
+
         $newProduct = [
             'product_id' => $productId,
             'product_name' => $productName,
@@ -24,12 +24,12 @@ class CreateInvoice extends CreateRecord
             'quantity' => 1,
             'product_amount' => number_format($defaultWidth * 1.0 * $unitPrice * 1, 0, '.', ''),
         ];
-        
+
         $currentProducts[] = $newProduct;
 
         // Ensure data is an array before merging
         $currentData = is_array($this->data) ? $this->data : [];
-        
+
         $this->form->fill(array_merge($currentData, [
             'products' => $currentProducts,
         ]));

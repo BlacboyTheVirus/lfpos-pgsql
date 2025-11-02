@@ -419,7 +419,7 @@ class InvoiceForm
                                                         ->disabled()
                                                         ->dehydrated(false)
                                                         ->prefix('₦')
-                                                        ->default('0.00')
+                                                        ->default('0')
                                                         ->extraInputAttributes(['class' => 'text-right font-medium']),
 
                                                     TextInput::make('outstanding_due_display')
@@ -427,7 +427,7 @@ class InvoiceForm
                                                         ->disabled()
                                                         ->dehydrated(false)
                                                         ->prefix('₦')
-                                                        ->default('0.00')
+                                                        ->default('0')
                                                         ->extraInputAttributes(['class' => 'text-right font-medium text-red-600 dark:text-red-400']),
                                                 ])
                                                     ->columns(2)
@@ -572,9 +572,9 @@ class InvoiceForm
         $roundOff = $roundedAmount - $finalAmount;
 
         // Set values
-        $set('subtotal', number_format($subtotal, 2, '.', ''));
-        $set('round_off', number_format($roundOff, 2, '.', ''));
-        $set('total', number_format($roundedAmount, 2, '.', ''));
+        $set('subtotal', number_format($subtotal, 0, '.', ','));
+        $set('round_off', number_format($roundOff, 0, '.', ','));
+        $set('total', number_format($roundedAmount, 0, '.', ','));
 
         // Convert amount to words
         $formatter = new NumberFormatter('en_NG', NumberFormatter::SPELLOUT);
@@ -592,7 +592,7 @@ class InvoiceForm
     public static function updatePaymentTotals(callable $set, callable $get): void
     {
         $payments = $get('payments') ?? [];
-        $total = (float) ($get('total') ?? 0);
+        $total = (float)self::parseNumeric($get('total') ?? 0);
 
         // Calculate total payments
         $totalPaid = 0;
@@ -611,13 +611,13 @@ class InvoiceForm
         }
 
         // Set calculated values
-        $set('paid', number_format($totalPaid, 2, '.', ''));
-        $set('due', number_format($due, 2, '.', ''));
+        $set('paid', number_format($totalPaid, 0, '.', ''));
+        $set('due', number_format($due, 0, '.', ''));
         $set('status', $status->value);
 
         // Update display fields
-        $set('total_payments_display', number_format($totalPaid, 2));
-        $set('outstanding_due_display', number_format($due, 2));
+        $set('total_payments_display', number_format($totalPaid, 0));
+        $set('outstanding_due_display', number_format($due, 0));
     }
 
     /**
@@ -685,5 +685,15 @@ class InvoiceForm
         }
 
         return $data;
+    }
+
+    public static function parseNumeric($value):float  {
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        // Remove common formatting characters
+        $cleaned = str_replace([',', ' ', '$'], '', $value);
+        return (float) $cleaned;
     }
 }

@@ -1,0 +1,26 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+.fi-width-7xl{
+    max-width: 88rem !important;
+}
+
+.text-sm {
+    font-size: 0.8125rem !important; /* 13px */
+    line-height: 1.25rem !important; /* 20px */
+}
+
+/*div.it-table-repeater.payments-table div.px-4 table thead tr th:nth-child(1),*/
+/*div.it-table-repeater.products-table div.px-4 table thead tr th:nth-child(2),*/
+/*div.it-table-repeater.expenses-table div.px-4 table thead tr th:nth-child(3),*/
+/*div.it-table-repeater.invoices-table div.px-4 table thead tr th:nth-child(4){*/
+/*    width: 23% !important;*/
+/*}*/
+
+/*div.it-table-repeater.payments-table div.px-4 table thead tr th:nth-child(5){*/
+/*    width: 5% !important;*/
+/*}*/
+
+

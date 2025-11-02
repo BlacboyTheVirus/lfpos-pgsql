@@ -177,7 +177,7 @@ class InvoiceForm
                                                 self::updateLineTotal($set, $get);
                                             })
                                             ->extraInputAttributes([
-                                                'class' => 'text-right pr-0 sm:pr-3 md:pr-[25px] lg:pr-3 min-w-[120px] md:min-w-[180px]',
+                                                'class' => 'text-right pr-0 sm:pr-3 md:pr-[25px] lg:pr-3 min-w-[80px] md:min-w-[100px]',
                                                 'data-filter' => 'decimal',
                                             ]),
 
@@ -277,7 +277,7 @@ class InvoiceForm
                                                                 return $get('id') && method_exists($livewire, 'getRecord') && $livewire->getRecord();
                                                             })
                                                             ->extraInputAttributes([
-                                                                'class' => 'min-w-[140px] md:min-w-[160px]',
+                                                                'class' => 'min-w-[100px] md:min-w-[100px]',
                                                             ]),
 
                                                         Select::make('payment_type')
@@ -295,7 +295,7 @@ class InvoiceForm
                                                             ->dehydrated()
                                                             ->live()
                                                             ->extraAttributes([
-                                                                'class' => 'min-w-[100px] md:min-w-[120px]',
+                                                                'class' => 'min-w-[100px] md:min-w-[100px]',
                                                             ]),
 
                                                         TextInput::make('amount')
@@ -312,7 +312,7 @@ class InvoiceForm
                                                                 self::updatePaymentTotals($set, $get);
                                                             })
                                                             ->extraInputAttributes([
-                                                                'class' => 'text-right pr-0 sm:pr-3 md:pr-[25px] lg:pr-3 min-w-[100px] md:min-w-[120px]',
+                                                                'class' => 'text-right pr-0 sm:pr-3 md:pr-[25px] lg:pr-3 min-w-[80px] md:min-w-[100px]',
                                                                 'data-filter' => 'decimal',
                                                             ])
                                                             ->disabled(function (callable $get, $livewire) {
@@ -323,7 +323,7 @@ class InvoiceForm
                                                         TextInput::make('note')
                                                             ->label('Note')
                                                             ->extraInputAttributes([
-                                                                'class' => 'text-sm min-w-[130px] md:min-w-[150px]',
+                                                                'class' => 'text-sm min-w-[100px] md:min-w-[120px]',
                                                             ]),
 
                                                     ])
@@ -479,7 +479,7 @@ class InvoiceForm
                                                     ->disabled()
                                                     ->dehydrated()
                                                     ->prefix('₦')
-                                                    ->extraInputAttributes(['class' => 'text-right font-bold text-lg']),
+                                                    ->extraInputAttributes(['class' => 'text-right font-bold']),
 
                                                 Textarea::make('total_in_words')
                                                     ->label('')

@@ -12,6 +12,14 @@
     line-height: 1.25rem !important; /* 20px */
 }
 
+label[for="form.products"] {
+    display: none !important;
+}
+
+.product-section .fi-section-content {
+    gap: 1px !important;
+}
+
 /*div.it-table-repeater.payments-table div.px-4 table thead tr th:nth-child(1),*/
 /*div.it-table-repeater.products-table div.px-4 table thead tr th:nth-child(2),*/
 /*div.it-table-repeater.expenses-table div.px-4 table thead tr th:nth-child(3),*/

@@ -246,7 +246,8 @@ class InvoiceForm
                                     ->reorderable(false)
                                     ->reorderableWithButtons()
                                     ->reorderableWithDragAndDrop(false),
-                            ]),
+                            ])
+                            ->extraAttributes(['class' =>'product-section']),
 
                         Group::make()
                             ->schema([

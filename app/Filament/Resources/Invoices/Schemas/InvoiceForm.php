@@ -221,6 +221,9 @@ class InvoiceForm
                                             ->extraInputAttributes([
                                                 'class' => 'text-right pr-0 sm:pr-3 md:pr-[25px] lg:pr-3 min-w-[80px] md:min-w-[100px]',
                                                 'data-filter' => 'decimal',
+                                            ])
+                                            ->extraAttributes([
+                                                'x-init' => '$nextTick(() => { setTimeout(() => { const input = $el.querySelector(\'input\'); if(input) { input.focus(); input.select(); console.log(\'✅ Width focused\'); } }, 300); })',
                                             ]),
 
                                         TextInput::make('height')

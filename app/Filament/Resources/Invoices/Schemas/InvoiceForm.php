@@ -367,6 +367,9 @@ class InvoiceForm
                                                                 'class' => 'text-right pr-0 sm:pr-3 md:pr-[25px] lg:pr-3 min-w-[80px] md:min-w-[100px]',
                                                                 'data-filter' => 'decimal',
                                                             ])
+                                                            ->extraAttributes([
+                                                                'x-init' => '$nextTick(() => { setTimeout(() => { const input = $el.querySelector(\'input\'); if(input && !input.disabled) { input.focus(); input.select(); console.log(\'✅ Amount focused\'); } }, 300); })',
+                                                            ])
                                                             ->disabled(function (callable $get, $livewire) {
                                                                 // Make readonly if this is an existing payment in edit mode
                                                                 return $get('id') && method_exists($livewire, 'getRecord') && $livewire->getRecord();

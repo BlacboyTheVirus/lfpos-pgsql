@@ -56,8 +56,22 @@ class InvoiceForm
                                     ->label('Customer')
                                     ->relationship('customer', 'name')
                                     ->searchable()
+                                    ->native(false)
                                     ->preload()
                                     ->required()
+                                    ->autofocus()
+                                    ->selectablePlaceholder(false)
+                                    ->extraAttributes([
+                                        'x-init' => '$nextTick(() => {
+                                            setTimeout(() => {
+                                                const input = $el.querySelector(\'.fi-select-input-placeholder\');
+                                                if (input) {
+                                                    input.click();
+                                                    input.focus();
+                                                }
+                                            }, 100);
+                                        })',
+                                    ])
                                     ->createOptionForm([
                                         TextInput::make('name')
                                             ->required()
@@ -98,7 +112,7 @@ class InvoiceForm
                                             '<span style="color: #16a34a; font-weight: 600;">No outstanding balance</span>'
                                         );
                                     })
-                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get, $livewire) {
                                         if ($state) {
                                             $customer = Customer::find($state);
                                             if ($customer) {
@@ -107,14 +121,16 @@ class InvoiceForm
                                                     ->where('status', '!=', InvoiceStatus::Paid)
                                                     ->sum('due');
 
-                                                if ($previousDue > 0) {
-                                                    Notification::make()
-                                                        ->title('Customer has outstanding balance')
-                                                        ->body('Previous due: ₦'.number_format($previousDue / 100, 2))
-                                                        ->warning()
-                                                        ->send();
-                                                }
+//                                                if ($previousDue > 0) {
+//                                                    Notification::make()
+//                                                        ->title('Customer has outstanding balance')
+//                                                        ->body('Previous due: ₦'.number_format($previousDue / 100, 2))
+//                                                        ->danger()
+//                                                        ->send();
+//                                                }
                                             }
+                                            // Dispatch browser event to focus date field
+                                            $livewire->dispatch('focus-date-field');
                                         }
                                         self::updatePaymentTotals($set, $get);
                                     }),
@@ -123,7 +139,11 @@ class InvoiceForm
                                     ->label('Invoice Date')
                                     ->required()
                                     ->default(today())
-                                    ->maxDate(today()),
+                                    ->maxDate(today())
+                                    ->native(true)
+                                    ->extraAttributes([
+                                        'x-on:focus-date-field.window' => 'setTimeout(() => { const input = $el.querySelector(\'input\'); if(input) { input.focus(); input.showPicker && input.showPicker(); } }, 100)',
+                                    ]),
 
                                 Textarea::make('note')
                                     ->label('Note')

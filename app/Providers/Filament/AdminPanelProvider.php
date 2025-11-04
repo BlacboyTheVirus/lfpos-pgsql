@@ -73,7 +73,7 @@ class AdminPanelProvider extends PanelProvider
                         icon="heroicon-o-document-plus"
                         tag="a"
                     >
-                        Create Invoice
+                        New Invoice
                     </x-filament::button>'
                 )
             );

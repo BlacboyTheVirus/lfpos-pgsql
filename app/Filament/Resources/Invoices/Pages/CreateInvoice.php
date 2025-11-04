@@ -11,6 +11,18 @@ class CreateInvoice extends CreateRecord
 {
     protected static string $resource = InvoiceResource::class;
 
+    protected function getCreateFormAction(): \Filament\Actions\Action
+    {
+        return parent::getCreateFormAction()
+            ->label('Save');
+    }
+
+    protected function getCreateAnotherFormAction(): \Filament\Actions\Action
+    {
+        return parent::getCreateAnotherFormAction()
+            ->label('Save & create another');
+    }
+
     public function addProductToForm($productId, $productName, $unitPrice, $defaultWidth): void
     {
         $currentProducts = $this->data['products'] ?? [];

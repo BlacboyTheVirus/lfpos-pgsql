@@ -103,13 +103,13 @@ class InvoiceForm
 
                                         if ($totalDue > 0) {
                                             return new \Illuminate\Support\HtmlString(
-                                                '<span style="color: #dc2626; font-weight: 600;">Total Outstanding: ₦'.
-                                                number_format($totalDue / 100, 2).'</span>'
+                                                'Outstanding: <span style="color: #dc2626; font-weight: 600;"> ₦'.
+                                                number_format($totalDue / 100, 0).'</span>'
                                             );
                                         }
 
                                         return new \Illuminate\Support\HtmlString(
-                                            '<span style="color: #16a34a; font-weight: 600;">No outstanding balance</span>'
+                                            '<span style="color: #16a34a; font-weight: 600;">No outstanding</span>'
                                         );
                                     })
                                     ->afterStateUpdated(function ($state, callable $set, callable $get, $livewire) {

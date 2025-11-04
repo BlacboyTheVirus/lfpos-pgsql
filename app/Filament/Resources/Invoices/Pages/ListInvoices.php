@@ -14,7 +14,7 @@ class ListInvoices extends ListRecords
     {
         return [
             CreateAction::make()
-                ->label('Create Invoice')
+                ->label('Save Invoice')
                 ->icon('heroicon-o-document-plus'),
         ];
     }

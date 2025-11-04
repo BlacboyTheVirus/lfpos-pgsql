@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Customers\Tables;
 
+use App\Models\Setting;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
@@ -11,6 +12,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -40,6 +42,7 @@ class CustomersTable
                 TextColumn::make('phone')
                     ->label('Phone')
                     ->searchable()
+                    ->sortable()
                     ->placeholder('No phone')
                     ->copyable()
                     ->copyMessage('Phone number copied')
@@ -48,11 +51,48 @@ class CustomersTable
                 TextColumn::make('email')
                     ->label('Email')
                     ->searchable()
+                    ->sortable()
                     ->placeholder('No email')
                     ->copyable()
                     ->copyMessage('Email copied')
-                    ->formatStateUsing(fn ($state) => $state ?: 'Not provided')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->formatStateUsing(fn ($state) => $state ?: 'Not provided'),
+
+                TextColumn::make('invoices_count')
+                    ->label('Invoices')
+                    ->counts('invoices')
+                    ->alignment('right')
+                    ->sortable(),
+
+                TextColumn::make('invoices_sum_total')
+                    ->label('Total Invoice')
+                    ->sum('invoices', 'total')
+                    ->formatStateUsing(fn ($state) => Setting::formatMoney((int) round($state / 100)))
+                    ->sortable()
+                    ->alignment('right')
+                    ->weight('semibold')
+                    ->summarize([
+                        Sum::make()
+                            ->label('Total')
+                            ->formatStateUsing(fn ($state) => Setting::formatMoney((int) round($state / 100))),
+                    ]),
+
+                TextColumn::make('invoices_sum_due')
+                    ->label('Total Due')
+                    ->sum('invoices', 'due')
+                    ->formatStateUsing(fn ($state) => Setting::formatMoney((int) round($state / 100)))
+                    ->sortable()
+                    ->alignment('right')
+                    ->color(fn ($state) => $state > 0 ? 'danger' : 'success')
+                    ->summarize([
+                        Sum::make()
+                            ->label('Total')
+                            ->formatStateUsing(fn ($state) => Setting::formatMoney((int) round($state / 100))),
+                    ]),
+
+                TextColumn::make('createdBy.name')
+                    ->label('Created By')
+                    ->sortable()
+                    ->placeholder('System'),
 
                 TextColumn::make('address')
                     ->label('Address')
@@ -65,19 +105,6 @@ class CustomersTable
                         return strlen($state) > 50 ? $state : null;
                     })
                     ->formatStateUsing(fn ($state) => $state ?: 'Not provided')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('invoices_count')
-                    ->label('Invoices')
-                    ->counts('invoices')
-                    ->badge()
-                    ->color('info')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('createdBy.name')
-                    ->label('Created By')
-                    ->sortable()
-                    ->placeholder('System')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('created_at')
@@ -191,6 +218,7 @@ class CustomersTable
                         ->modalDescription('Are you sure you want to delete the selected customers? This action cannot be undone.'),
                 ]),
             ])
+            ->deferFilters(false)
             ->defaultSort('created_at', 'desc')
             ->striped()
             ->paginated([10, 25, 50, 100])

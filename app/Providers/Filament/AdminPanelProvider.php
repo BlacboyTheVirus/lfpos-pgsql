@@ -36,9 +36,14 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Teal,
             ])
+            ->brandName(('LfPOS'))
+            ->brandLogo(asset('logo.png'))
+            ->brandLogoHeight(('2rem'))
+            ->darkModeBrandLogo(asset('logo_dark.png'))
+            ->favicon(asset('favicon.png'))
             ->viteTheme('resources/css/filament/admin/theme.css')
-            ->sidebarWidth('14rem')
-            //->maxContentWidth(Width::SevenExtraLarge)
+            ->sidebarWidth('15rem')
+            // ->maxContentWidth(Width::SevenExtraLarge)
             ->maxContentWidth(Width::SevenExtraLarge)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
@@ -68,7 +73,7 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
                 fn (): string => Blade::render(
                     '<x-filament::button
-                        href="' . InvoiceResource::getUrl('create') . '"
+                        href="'.InvoiceResource::getUrl('create').'"
                         color="primary"
                         icon="heroicon-o-document-plus"
                         tag="a"

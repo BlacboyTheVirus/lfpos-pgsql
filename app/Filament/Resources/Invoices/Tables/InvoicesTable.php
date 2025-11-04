@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Invoices\Tables;
 
 use App\Enums\InvoiceStatus;
+use App\Filament\Resources\Invoices\InvoiceResource;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
@@ -13,6 +14,7 @@ use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -37,12 +39,46 @@ class InvoicesTable
                     ->searchable()
                     ->weight('medium'),
 
-
                 TextColumn::make('date')
                     ->label('Invoice Date')
                     ->date('M j, Y')
                     ->sortable()
                     ->searchable(),
+
+                TextColumn::make('total')
+                    ->label('Total')
+                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                    ->sortable()
+                    ->alignment('right')
+                    ->weight('semibold')
+                    ->summarize([
+                        Sum::make()
+                            ->label('Total Invoices')
+                            ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state / 100))),
+                    ]),
+
+                TextColumn::make('paid')
+                    ->label('Paid')
+                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                    ->sortable()
+                    ->alignment('right')
+                    ->summarize([
+                        Sum::make()
+                            ->label('Total Payments')
+                            ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state / 100))),
+                    ]),
+
+                TextColumn::make('due')
+                    ->label('Due')
+                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                    ->sortable()
+                    ->alignment('right')
+                    ->color(fn ($state) => $state > 0 ? 'danger' : 'success')
+                    ->summarize([
+                        Sum::make()
+                            ->label('Total Due')
+                            ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state / 100))),
+                    ]),
 
                 TextColumn::make('status')
                     ->label('Status')
@@ -52,34 +88,13 @@ class InvoicesTable
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('total')
-                    ->label('Total')
-                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
-                    ->sortable()
-                    ->alignment('right')
-                    ->weight('semibold'),
-
-                TextColumn::make('paid')
-                    ->label('Paid')
-                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
-                    ->sortable()
-                    ->alignment('right')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('due')
-                    ->label('Due')
-                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
-                    ->sortable()
-                    ->alignment('right')
-                    ->color(fn ($state) => $state > 0 ? 'danger' : 'success'),
-
-                IconColumn::make('is_paid')
-                    ->label('Paid')
-                    ->boolean()
-                    ->trueIcon(Heroicon::OutlinedCheckCircle)
-                    ->falseIcon(Heroicon::OutlinedXCircle)
-                    ->trueColor('success')
-                    ->falseColor('danger'),
+//                IconColumn::make('is_paid')
+//                    ->label('Paid')
+//                    ->boolean()
+//                    ->trueIcon(Heroicon::OutlinedCheckCircle)
+//                    ->falseIcon(Heroicon::OutlinedXCircle)
+//                    ->trueColor('success')
+//                    ->falseColor('danger'),
 
                 TextColumn::make('createdBy.name')
                     ->label('Created By')
@@ -104,9 +119,37 @@ class InvoicesTable
             ->filters([
                 SelectFilter::make('status')
                     ->label('Status')
-                    ->options(InvoiceStatus::class)
-                    ->searchable()
-                    ->preload(),
+                    ->options([
+
+                        'outstanding' => 'Outstanding',
+                        'partial' => 'Partial',
+                        'unpaid' => 'Unpaid',
+                        'paid' => 'Paid',
+                    ])
+                    ->query(function ($query, array $data) {
+                        if (! isset($data['value']) || $data['value'] === 'all' || $data['value'] === null) {
+                            return $query;
+                        }
+
+                        if ($data['value'] === 'outstanding') {
+                            return $query->whereIn('status', [InvoiceStatus::Unpaid, InvoiceStatus::Partial]);
+                        }
+
+                        if ($data['value'] === 'partial') {
+                            return $query->where('status', InvoiceStatus::Partial);
+                        }
+
+                        if ($data['value'] === 'unpaid') {
+                            return $query->where('status', InvoiceStatus::Unpaid);
+                        }
+
+                        if ($data['value'] === 'paid') {
+                            return $query->where('status', InvoiceStatus::Paid);
+                        }
+
+                        return $query;
+                    })
+                    ->default('all'),
 
                 SelectFilter::make('customer_id')
                     ->label('Customer')
@@ -138,45 +181,12 @@ class InvoicesTable
 
                         return $indicators;
                     }),
-
-                SelectFilter::make('created_by')
-                    ->label('Created By')
-                    ->relationship('createdBy', 'name')
-                    ->searchable()
-                    ->preload(),
-
-                Filter::make('created_at')
-                    ->label('Created Date')
-                    ->schema([
-                        DatePicker::make('created_from')
-                            ->label('Created From'),
-                        DatePicker::make('created_to')
-                            ->label('Created To'),
-                    ])
-                    ->query(function ($query, array $data) {
-                        return $query
-                            ->when($data['created_from'], fn ($query) => $query->whereDate('created_at', '>=', $data['created_from']))
-                            ->when($data['created_to'], fn ($query) => $query->whereDate('created_at', '<=', $data['created_to']));
-                    })
-                    ->indicateUsing(function (array $data): array {
-                        $indicators = [];
-                        if ($data['created_from']) {
-                            $indicators[] = 'Created from: '.\Carbon\Carbon::parse($data['created_from'])->toFormattedDateString();
-                        }
-                        if ($data['created_to']) {
-                            $indicators[] = 'Created to: '.\Carbon\Carbon::parse($data['created_to'])->toFormattedDateString();
-                        }
-
-                        return $indicators;
-                    }),
             ])
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make()
-                        ->slideOver()
-                        ->modalWidth('md')
-                        ->color('info')
-                        ->infolist(\App\Filament\Resources\Invoices\Schemas\InvoiceInfolist::getInfolistComponents()),
+                        ->url(fn ($record) => InvoiceResource::getUrl('view', ['record' => $record]))
+                        ->color('info'),
 
                     EditAction::make()
                         ->slideOver()
@@ -218,6 +228,7 @@ class InvoicesTable
                         ->modalDescription('Are you sure you want to delete the selected invoices? This action cannot be undone.'),
                 ]),
             ])
+            ->deferFilters(false)
             ->defaultSort('date', 'desc')
             ->striped()
             ->paginated([10, 25, 50, 100])

@@ -95,6 +95,7 @@ class ProductsTable
                     ->searchable()
                     ->preload(),
             ])
+            ->deferFilters(false)
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make()

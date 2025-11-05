@@ -123,37 +123,15 @@ class ExpensesTable
                         return $indicators;
                     }),
 
-                SelectFilter::make('created_by')
-                    ->label('Created By')
-                    ->relationship('createdBy', 'name')
-                    ->searchable()
-                    ->preload(),
+//                SelectFilter::make('created_by')
+//                    ->label('Created By')
+//                    ->relationship('createdBy', 'name')
+//                    ->searchable()
+//                    ->preload(),
 
-                Filter::make('created_at')
-                    ->label('Created Date')
-                    ->schema([
-                        DatePicker::make('created_from')
-                            ->label('Created From'),
-                        DatePicker::make('created_to')
-                            ->label('Created To'),
-                    ])
-                    ->query(function ($query, array $data) {
-                        return $query
-                            ->when($data['created_from'], fn ($query) => $query->whereDate('created_at', '>=', $data['created_from']))
-                            ->when($data['created_to'], fn ($query) => $query->whereDate('created_at', '<=', $data['created_to']));
-                    })
-                    ->indicateUsing(function (array $data): array {
-                        $indicators = [];
-                        if ($data['created_from']) {
-                            $indicators[] = 'Created from: '.\Carbon\Carbon::parse($data['created_from'])->toFormattedDateString();
-                        }
-                        if ($data['created_to']) {
-                            $indicators[] = 'Created to: '.\Carbon\Carbon::parse($data['created_to'])->toFormattedDateString();
-                        }
 
-                        return $indicators;
-                    }),
             ])
+            ->deferFilters(false)
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make()

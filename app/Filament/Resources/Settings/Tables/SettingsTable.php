@@ -122,6 +122,7 @@ class SettingsTable
                         false: fn ($query) => $query->where('value', 'not like', '%{%')->where('value', 'not like', '%[%'),
                     ),
             ])
+            ->deferFilters(false)
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make()

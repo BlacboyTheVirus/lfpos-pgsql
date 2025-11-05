@@ -35,6 +35,7 @@ class UsersTable
             ->filters([
                 //
             ])
+            ->deferFilters(false)
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),

@@ -9,7 +9,6 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\Summarizers\Sum;
@@ -122,23 +121,12 @@ class CustomersTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                TernaryFilter::make('is_walkin')
-                    ->label('Customer Type')
-                    ->placeholder('All customers')
-                    ->trueLabel('Walk-in only')
-                    ->falseLabel('Regular only')
-                    ->queries(
-                        true: function ($query) {
-                            $prefix = \App\Models\Setting::get('customer_code_prefix', 'CU-');
-
-                            return $query->where('code', $prefix.'0001');
-                        },
-                        false: function ($query) {
-                            $prefix = \App\Models\Setting::get('customer_code_prefix', 'CU-');
-
-                            return $query->where('code', '!=', $prefix.'0001');
-                        },
-                    ),
+                SelectFilter::make('name')
+                    ->label('Customer Name')
+                    ->options(fn () => \App\Models\Customer::pluck('name', 'id'))
+                    ->searchable()
+                    ->preload()
+                    ->query(fn ($query, $data) => $query->when($data['value'], fn ($query) => $query->where('id', $data['value']))),
 
                 SelectFilter::make('created_by')
                     ->label('Created By')
@@ -173,24 +161,30 @@ class CustomersTable
             ])
             ->recordActions([
                 ActionGroup::make([
-                    ViewAction::make()
-                        ->slideOver()
-                        ->modalWidth('md')
+                    Action::make('view')
+                        ->label('View')
+                        ->icon('heroicon-o-eye')
                         ->color('info')
-                        ->infolist(\App\Filament\Resources\Customers\Schemas\CustomerInfolist::getInfolistComponents()),
+                        ->modalHeading('Transactions')
+                        ->modalWidth('5xl')
+                        ->modalSubmitAction(false)
+                        ->modalCancelActionLabel('Close')
+                        ->modalContent(fn ($record) => view('filament.components.customer-transactions-wrapper', [
+                            'customer' => $record,
+                        ])),
 
                     EditAction::make()
                         ->slideOver()
                         ->modalWidth('md')
                         ->color('warning')
-                        ->form(\App\Filament\Resources\Customers\Schemas\CustomerForm::getFormComponents())
+                        ->schema(\App\Filament\Resources\Customers\Schemas\CustomerForm::getFormComponents())
                         ->hidden(fn ($record) => $record->isWalkin()),
 
                     Action::make('duplicate')
                         ->label('Duplicate')
                         ->icon(Heroicon::OutlinedDocumentDuplicate)
                         ->color('gray')
-                        ->form(\App\Filament\Resources\Customers\Schemas\CustomerForm::getFormComponents())
+                        ->schema(\App\Filament\Resources\Customers\Schemas\CustomerForm::getFormComponents())
                         ->fillForm(fn ($record) => [
                             'name' => $record->name.' (Copy)',
                             'phone' => $record->phone,

@@ -18,6 +18,7 @@ use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 
 class InvoicesTable
@@ -115,6 +116,16 @@ class InvoicesTable
                     ->since()
                     ->description(fn ($record) => $record->updated_at->format('M j, Y g:i A'))
                     ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->groups([
+                Group::make('date')
+                    ->label('Invoice Date')
+                    ->date()
+                    ->collapsible(),
+
+                Group::make('customer.name')
+                    ->label('Customer')
+                    ->collapsible(),
             ])
             ->filters([
                 SelectFilter::make('status')

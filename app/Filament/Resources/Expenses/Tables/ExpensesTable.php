@@ -15,6 +15,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 
 class ExpensesTable
@@ -90,6 +91,17 @@ class ExpensesTable
                     ->since()
                     ->description(fn ($record) => $record->updated_at->format('M j, Y g:i A'))
                     ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->groups([
+                Group::make('date')
+                    ->label('Expense Date')
+                    ->date()
+                    ->collapsible(),
+
+                Group::make('category')
+                    ->label('Category')
+                    ->getTitleFromRecordUsing(fn ($record) => $record->category?->getLabel() ?? 'Uncategorized')
+                    ->collapsible(),
             ])
             ->filters([
                 SelectFilter::make('category')

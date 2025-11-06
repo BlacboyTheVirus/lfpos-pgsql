@@ -31,7 +31,7 @@ class EditInvoice extends EditRecord
             $total = $this->record->total;
             $formatter = new \NumberFormatter('en_NG', \NumberFormatter::SPELLOUT);
             $amountInWords = $formatter->format($total);
-            $data['total_in_words'] = ucwords($amountInWords) . ' Naira only';
+            $data['total_in_words'] = ucwords($amountInWords).' Naira only';
         }
 
         return $data;

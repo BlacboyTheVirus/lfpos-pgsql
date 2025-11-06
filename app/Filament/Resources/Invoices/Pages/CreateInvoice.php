@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Invoices\Pages;
 use App\Filament\Resources\Invoices\InvoiceResource;
 use App\Filament\Resources\Invoices\Schemas\InvoiceForm;
 use Filament\Resources\Pages\CreateRecord;
-use Livewire\Attributes\On;
 
 class CreateInvoice extends CreateRecord
 {

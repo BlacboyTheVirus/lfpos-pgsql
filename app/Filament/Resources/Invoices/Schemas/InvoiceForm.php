@@ -121,13 +121,13 @@ class InvoiceForm
                                                     ->where('status', '!=', InvoiceStatus::Paid)
                                                     ->sum('due');
 
-//                                                if ($previousDue > 0) {
-//                                                    Notification::make()
-//                                                        ->title('Customer has outstanding balance')
-//                                                        ->body('Previous due: ₦'.number_format($previousDue / 100, 2))
-//                                                        ->danger()
-//                                                        ->send();
-//                                                }
+                                                //                                                if ($previousDue > 0) {
+                                                //                                                    Notification::make()
+                                                //                                                        ->title('Customer has outstanding balance')
+                                                //                                                        ->body('Previous due: ₦'.number_format($previousDue / 100, 2))
+                                                //                                                        ->danger()
+                                                //                                                        ->send();
+                                                //                                                }
                                             }
                                             // Dispatch browser event to focus date field
                                             $livewire->dispatch('focus-date-field');
@@ -292,7 +292,7 @@ class InvoiceForm
                                     ->reorderableWithButtons()
                                     ->reorderableWithDragAndDrop(false),
                             ])
-                            ->extraAttributes(['class' =>'product-section']),
+                            ->extraAttributes(['class' => 'product-section']),
 
                         Group::make()
                             ->schema([
@@ -648,7 +648,7 @@ class InvoiceForm
     public static function updatePaymentTotals(callable $set, callable $get): void
     {
         $payments = $get('payments') ?? [];
-        $total = (float)self::parseNumeric($get('total') ?? 0);
+        $total = (float) self::parseNumeric($get('total') ?? 0);
 
         // Calculate total payments
         $totalPaid = 0;
@@ -743,13 +743,15 @@ class InvoiceForm
         return $data;
     }
 
-    public static function parseNumeric($value):float  {
+    public static function parseNumeric($value): float
+    {
         if (is_numeric($value)) {
             return (float) $value;
         }
 
         // Remove common formatting characters
         $cleaned = str_replace([',', ' ', '$'], '', $value);
+
         return (float) $cleaned;
     }
 }

@@ -13,7 +13,11 @@ class ListUsers extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()
+                ->slideOver()
+                ->modalWidth('md')
+                ->schema(\App\Filament\Resources\Users\Schemas\UserForm::getFormComponents())
+                ->successNotificationTitle('User created successfully'),
         ];
     }
 }

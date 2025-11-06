@@ -88,13 +88,13 @@ class InvoicesTable
                     ->searchable()
                     ->sortable(),
 
-//                IconColumn::make('is_paid')
-//                    ->label('Paid')
-//                    ->boolean()
-//                    ->trueIcon(Heroicon::OutlinedCheckCircle)
-//                    ->falseIcon(Heroicon::OutlinedXCircle)
-//                    ->trueColor('success')
-//                    ->falseColor('danger'),
+                //                IconColumn::make('is_paid')
+                //                    ->label('Paid')
+                //                    ->boolean()
+                //                    ->trueIcon(Heroicon::OutlinedCheckCircle)
+                //                    ->falseIcon(Heroicon::OutlinedXCircle)
+                //                    ->trueColor('success')
+                //                    ->falseColor('danger'),
 
                 TextColumn::make('createdBy.name')
                     ->label('Created By')
@@ -120,7 +120,6 @@ class InvoicesTable
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options([
-
                         'outstanding' => 'Outstanding',
                         'partial' => 'Partial',
                         'unpaid' => 'Unpaid',
@@ -229,6 +228,7 @@ class InvoicesTable
                 ]),
             ])
             ->deferFilters(false)
+            ->deferColumnManager(false)
             ->defaultSort('date', 'desc')
             ->striped()
             ->paginated([10, 25, 50, 100])

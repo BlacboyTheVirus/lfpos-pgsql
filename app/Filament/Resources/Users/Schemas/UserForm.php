@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Users\Schemas;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Hash;
 
 class UserForm
 {
@@ -13,15 +14,37 @@ class UserForm
         return $schema
             ->components([
                 TextInput::make('name')
-                    ->required(),
+                    ->required()
+                    ->maxLength(255),
                 TextInput::make('email')
                     ->label('Email address')
                     ->email()
-                    ->required(),
-                DateTimePicker::make('email_verified_at'),
+                    ->required()
+                    ->unique(ignoreRecord: true)
+                    ->maxLength(255),
+                DateTimePicker::make('email_verified_at')
+                    ->label('Email Verified At'),
                 TextInput::make('password')
                     ->password()
-                    ->required(),
+                    ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? Hash::make($state) : null)
+                    ->dehydrated(fn (?string $state): bool => filled($state))
+                    ->required(fn (string $operation): bool => $operation === 'create')
+                    ->maxLength(255)
+                    ->same('password_confirmation')
+                    ->validationAttribute('password')
+                    ->placeholder('Leave blank to keep current password'),
+                TextInput::make('password_confirmation')
+                    ->password()
+                    ->dehydrated(false)
+                    ->required(fn (string $operation): bool => $operation === 'create')
+                    ->maxLength(255)
+                    ->placeholder('Confirm your password')
+                    ->label('Password Confirmation'),
             ]);
+    }
+
+    public static function getFormComponents(): array
+    {
+        return static::configure(Schema::make())->getComponents();
     }
 }

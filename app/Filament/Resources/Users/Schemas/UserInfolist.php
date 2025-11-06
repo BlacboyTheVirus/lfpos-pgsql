@@ -25,4 +25,9 @@ class UserInfolist
                     ->placeholder('-'),
             ]);
     }
+
+    public static function getInfolistComponents(): array
+    {
+        return static::configure(Schema::make())->getComponents();
+    }
 }

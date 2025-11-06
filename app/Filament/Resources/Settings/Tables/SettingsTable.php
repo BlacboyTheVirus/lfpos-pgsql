@@ -123,6 +123,7 @@ class SettingsTable
                     ),
             ])
             ->deferFilters(false)
+            ->deferColumnManager(false)
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make()

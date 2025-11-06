@@ -15,7 +15,6 @@ use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 class CustomersTable
@@ -213,6 +212,7 @@ class CustomersTable
                 ]),
             ])
             ->deferFilters(false)
+            ->deferColumnManager(false)
             ->defaultSort('created_at', 'desc')
             ->striped()
             ->paginated([10, 25, 50, 100])

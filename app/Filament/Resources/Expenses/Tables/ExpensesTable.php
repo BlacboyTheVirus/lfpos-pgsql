@@ -123,15 +123,15 @@ class ExpensesTable
                         return $indicators;
                     }),
 
-//                SelectFilter::make('created_by')
-//                    ->label('Created By')
-//                    ->relationship('createdBy', 'name')
-//                    ->searchable()
-//                    ->preload(),
-
+                //                SelectFilter::make('created_by')
+                //                    ->label('Created By')
+                //                    ->relationship('createdBy', 'name')
+                //                    ->searchable()
+                //                    ->preload(),
 
             ])
             ->deferFilters(false)
+            ->deferColumnManager(false)
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make()
@@ -144,13 +144,13 @@ class ExpensesTable
                         ->slideOver()
                         ->modalWidth('md')
                         ->color('warning')
-                        ->form(\App\Filament\Resources\Expenses\Schemas\ExpenseForm::getFormComponents()),
+                        ->schema(\App\Filament\Resources\Expenses\Schemas\ExpenseForm::getFormComponents()),
 
                     Action::make('duplicate')
                         ->label('Duplicate')
                         ->icon(Heroicon::OutlinedDocumentDuplicate)
                         ->color('gray')
-                        ->form(\App\Filament\Resources\Expenses\Schemas\ExpenseForm::getFormComponents())
+                        ->schema(\App\Filament\Resources\Expenses\Schemas\ExpenseForm::getFormComponents())
                         ->fillForm(fn ($record) => [
                             'category' => $record->category,
                             'description' => $record->description.' (Copy)',
@@ -179,7 +179,7 @@ class ExpensesTable
             ])
             ->defaultSort('date', 'desc')
             ->striped()
-            ->paginated([10, 25, 50, 1])
+            ->paginated([10, 25, 50, 100])
             ->deferLoading()
             ->persistFiltersInSession()
             ->persistSortInSession()

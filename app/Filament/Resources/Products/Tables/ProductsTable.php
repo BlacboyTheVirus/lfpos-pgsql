@@ -96,6 +96,7 @@ class ProductsTable
                     ->preload(),
             ])
             ->deferFilters(false)
+            ->deferColumnManager(false)
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make()

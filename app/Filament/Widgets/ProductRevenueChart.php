@@ -5,17 +5,15 @@ namespace App\Filament\Widgets;
 use App\Filament\Traits\HasDateFiltering;
 use App\Models\InvoiceProduct;
 use App\Models\Setting;
+use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
-use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\DB;
 
-class ProductRevenueChartWidget extends Widget
+class ProductRevenueChart extends ChartWidget
 {
     use InteractsWithPageFilters, HasDateFiltering;
 
     protected static ?int $sort = 3;
-
-    protected string $view = 'filament.widgets.product-revenue-chart';
 
     protected int|string|array $columnSpan = [
         'default' => 'full',
@@ -27,18 +25,14 @@ class ProductRevenueChartWidget extends Widget
 
     public function getHeading(): string
     {
-        $data = $this->getChartData();
-        $formattedTotal = Setting::formatMoney((int) round($data['total']));
+        $data = $this->getData();
+        $total = array_sum($data['datasets'][0]['data']);
+        $formattedTotal = Setting::formatMoney((int) round($total));
 
         return "Product Revenue Distribution ({$formattedTotal})";
     }
 
-    public function getChartDataProperty(): array
-    {
-        return $this->getChartData();
-    }
-
-    protected function getChartData(): array
+    protected function getData(): array
     {
         $dateRange = $this->getDateRangeFromFilters();
 
@@ -60,19 +54,53 @@ class ProductRevenueChartWidget extends Widget
 
         $labels = [];
         $data = [];
-        $total = 0;
+        $colors = [
+            'rgb(59, 130, 246)',   // blue
+            'rgb(34, 197, 94)',    // green
+            'rgb(251, 146, 60)',   // orange
+            'rgb(168, 85, 247)',   // purple
+            'rgb(236, 72, 153)',   // pink
+            'rgb(245, 158, 11)',   // amber
+            'rgb(20, 184, 166)',   // teal
+            'rgb(239, 68, 68)',    // red
+            'rgb(139, 92, 246)',   // violet
+            'rgb(14, 165, 233)',   // sky
+        ];
 
-        foreach ($products as $product) {
+        foreach ($products as $index => $product) {
             $amount = $product->total_revenue / 100;
             $labels[] = $product->name;
-            $data[] = round($amount);
-            $total += $amount;
+            $data[] = round($amount, 2);
         }
 
         return [
+            'datasets' => [
+                [
+                    'data' => $data,
+                    'backgroundColor' => array_slice($colors, 0, count($data)),
+                    'borderWidth' => 2,
+                    'borderColor' => '#fff',
+                ]
+            ],
             'labels' => $labels,
-            'data' => $data,
-            'total' => $total,
+        ];
+    }
+
+    protected function getType(): string
+    {
+        return 'doughnut';
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'responsive' => true,
+            'maintainAspectRatio' => false,
+            'plugins' => [
+                'legend' => [
+                    'position' => 'right',
+                ],
+            ],
         ];
     }
 }

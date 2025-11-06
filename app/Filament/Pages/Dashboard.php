@@ -23,7 +23,7 @@ class Dashboard extends BaseDashboard
         return [
             \App\Filament\Widgets\DashboardStatsWidget::class,
             \App\Filament\Widgets\InvoiceTotalsChart::class,
-            \App\Filament\Widgets\ProductRevenueChartWidget::class,
+            \App\Filament\Widgets\ProductRevenueChart::class,
             \App\Filament\Widgets\TopCustomersWidget::class,
         ];
     }

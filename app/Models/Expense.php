@@ -54,6 +54,34 @@ class Expense extends Model
     }
 
     /**
+     * Scope a query to get distinct descriptions for autocomplete.
+     */
+    public function scopeDistinctDescriptions($query, string $search = null, int $limit = 20)
+    {
+        // Use a subquery to work around PostgreSQL's DISTINCT + ORDER BY limitation
+        $query->fromSub(function ($subQuery) use ($search) {
+            $subQuery->select('description')
+                ->selectRaw('COUNT(*) as count')
+                ->from('expenses')
+                ->whereNotNull('description')
+                ->where('description', '!=', '');
+
+            if ($search) {
+                $subQuery->where('description', 'ILIKE', '%' . $search . '%');
+            }
+
+            $subQuery->groupBy('description');
+
+        }, 'expense_counts')
+        ->select('description')
+        ->orderByDesc('count')
+        ->orderBy('description')
+        ->limit($limit);
+
+        return $query;
+    }
+
+    /**
      * Get the user who created this expense.
      */
     public function createdBy(): BelongsTo

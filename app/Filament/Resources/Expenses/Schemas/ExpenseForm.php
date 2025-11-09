@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Expenses\Schemas;
 
 use App\Enums\ExpenseCategory;
+use DefStudio\SearchableInput\Forms\Components\SearchableInput;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -61,11 +62,20 @@ class ExpenseForm
 
                             ]),
 
-                        TextInput::make('description')
+                        SearchableInput::make('description')
                             ->label('Description')
                             ->required()
                             ->maxLength(255)
                             ->placeholder('Enter expense description')
+                            ->searchUsing(function (string $search) {
+                                if (strlen($search) < 2) {
+                                    return [];
+                                }
+
+                                return \App\Models\Expense::distinctDescriptions($search, 20)
+                                    ->pluck('description')
+                                    ->toArray();
+                            })
                             ->columnSpanFull(),
 
                         Textarea::make('note')

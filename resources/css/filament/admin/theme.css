@@ -2,6 +2,7 @@
 
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
+@source '../../../../vendor/defstudio/filament-searchable-input/resources/**/*.blade.php';
 
 .fi-width-7xl{
     max-width: 88rem !important;
@@ -18,6 +19,12 @@ label[for="form.products"] {
 
 .product-section .fi-section-content {
     gap: 1px !important;
+}
+
+.def-fo-searchable-input-dropdown-list-item:hover {
+    background-color: #2dd4bf !important;
+    border-left: 2px solid rgb(59 130 246) !important;
+
 }
 
 .it-table-repeater.products-table tbody tr td:first-child {

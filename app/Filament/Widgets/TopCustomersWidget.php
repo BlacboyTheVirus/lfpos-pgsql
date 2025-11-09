@@ -18,7 +18,14 @@ class TopCustomersWidget extends BaseWidget
 
     protected static ?int $sort = 4;
 
-    protected int|string|array $columnSpan = 'full';
+    protected int|string|array $columnSpan = [
+        'default' => 'full',
+        'sm' => 'full',
+        'md' => 2,
+        'lg' => 2,
+        'xl' => 2,
+        '2xl' => 2,
+    ];
 
     protected static ?string $heading = 'Top Customers';
 
@@ -27,48 +34,94 @@ class TopCustomersWidget extends BaseWidget
         return $table
             ->query($this->getTableQuery())
             ->columns([
+                TextColumn::make('rank')
+                    ->label('Rank')
+                    ->getStateUsing(function ($record, $livewire) {
+                        static $rankings = null;
+
+                        // Cache the rankings on first call
+                        if ($rankings === null) {
+                            $customers = $this->getTableQuery()->get();
+                            $rankings = [];
+                            $position = 1;
+
+                            foreach ($customers as $customer) {
+                                $rankings[$customer->id] = $position++;
+                            }
+                        }
+
+                        return $rankings[$record->id] ?? '-';
+                    })
+                    ->badge()
+                    ->color('primary')
+                    ->alignCenter(),
+
                 TextColumn::make('name')
                     ->label('Customer')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->url(function ($record) {
+                        return CustomerResource::getUrl('index') . '?tableAction=view&tableActionRecord=' . $record->id;
+                    })
+                    ->openUrlInNewTab(false),
 
                 TextColumn::make('period_invoices_sum')
                     ->label('Total Revenue')
-                    ->formatStateUsing(fn ($state) => Setting::formatMoney((int) round(($state ?? 0) / 100)))
+                    ->formatStateUsing(fn ($record) => Setting::formatMoney((int) round(($record->period_invoices_sum ?? 0) / 100)))
                     ->sortable()
                     ->alignment('right'),
 
                 TextColumn::make('invoices_sum_due')
                     ->label('Amount Due')
-                    ->formatStateUsing(fn ($state) => Setting::formatMoney((int) round(($state ?? 0) / 100)))
+                    ->formatStateUsing(fn ($record) => Setting::formatMoney((int) round(($record->invoices_sum_due ?? 0) / 100)))
                     ->sortable()
                     ->alignment('right')
-                    ->color(fn ($state) => $state > 0 ? 'danger' : 'success'),
+                    ->color(fn ($record) => ($record->invoices_sum_due ?? 0) > 0 ? 'danger' : 'success'),
             ])
             ->heading('Top Customers by Revenue')
             ->paginated([5, 10, 25])
-            ->defaultPaginationPageOption(5);
+            ->defaultPaginationPageOption(5)
+            ->striped()
+            ->recordUrl(function ($record) {
+                return CustomerResource::getUrl('index') . '?tableAction=view&tableActionRecord=' . $record->id;
+            });
     }
 
     protected function getTableQuery(): Builder
     {
         $dateRange = $this->getDateRangeFromFilters();
 
+        // Always apply date filtering - if no specific range, use last 12 months
         if ($dateRange['start'] && $dateRange['end']) {
-            $query = Customer::query()
-                ->withSum([
-                    'invoices as invoices_sum_due' => fn ($q) => $q->whereBetween('date', [$dateRange['start'], $dateRange['end']]),
-                ], 'due')
-                ->withSum([
-                    'invoices as period_invoices_sum' => fn ($q) => $q->whereBetween('date', [$dateRange['start'], $dateRange['end']]),
-                ], 'total');
+            // Custom date range
+            $startDate = $dateRange['start'];
+            $endDate = $dateRange['end'];
         } else {
-            $query = Customer::query()
-                ->withSum('invoices as invoices_sum_due', 'due')
-                ->withSum('invoices as period_invoices_sum', 'total');
+            // Default to last 12 months if no range specified
+            $startDate = now()->subMonths(12)->startOfMonth()->toDateString();
+            $endDate = now()->endOfMonth()->toDateString();
         }
 
-        return $query
+        // Use a join to only include customers with invoices in the date range
+        // Exclude Walk-In customer (code ending with 0001)
+        return Customer::query()
+            ->join('invoices', 'customers.id', '=', 'invoices.customer_id')
+            ->whereBetween('invoices.date', [$startDate, $endDate])
+            ->where('customers.code', 'NOT LIKE', '%0001')
+            ->selectRaw('
+                customers.id,
+                customers.name,
+                customers.email,
+                customers.phone,
+                customers.address,
+                customers.code,
+                customers.created_at,
+                customers.updated_at,
+                SUM(invoices.total) as period_invoices_sum,
+                SUM(invoices.due) as invoices_sum_due
+            ')
+            ->groupBy('customers.id', 'customers.name', 'customers.email', 'customers.phone', 'customers.address', 'customers.code', 'customers.created_at', 'customers.updated_at')
+            ->havingRaw('SUM(invoices.total) > 0')
             ->orderByDesc('period_invoices_sum')
             ->limit(10);
     }

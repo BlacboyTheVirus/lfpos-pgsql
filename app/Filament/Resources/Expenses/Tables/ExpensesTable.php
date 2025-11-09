@@ -31,6 +31,12 @@ class ExpensesTable
                     ->copyable()
                     ->copyMessage('Expense code copied'),
 
+                TextColumn::make('date')
+                    ->label('Expense Date')
+                    ->date('M j, Y')
+                    ->sortable()
+                    ->searchable(),
+
                 TextColumn::make('category')
                     ->label('Category')
                     ->formatStateUsing(fn ($state) => $state?->getLabel() ?? $state)
@@ -39,11 +45,15 @@ class ExpensesTable
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('date')
-                    ->label('Expense Date')
-                    ->date('M j, Y')
+                TextColumn::make('amount')
+                    ->label('Amount')
+                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state)))
                     ->sortable()
-                    ->searchable(),
+                    ->alignment('right')
+                    ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                            ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state / 100))),
+                    ]),
 
                 TextColumn::make('description')
                     ->label('Description')
@@ -55,16 +65,6 @@ class ExpensesTable
 
                         return strlen($state) > 50 ? $state : null;
                     }),
-
-                TextColumn::make('amount')
-                    ->label('Amount')
-                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state)))
-                    ->sortable()
-                    ->alignment('right')
-                    ->summarize([
-                        \Filament\Tables\Columns\Summarizers\Sum::make()
-                            ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state / 100))),
-                    ]),
 
                 TextColumn::make('note')
                     ->label('Note')

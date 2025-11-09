@@ -24,6 +24,20 @@ label[for="form.products"] {
     display: none !important;
 }
 
+
+/* Chart height constraints */
+.fi-wc-chart {
+    max-height: 350px !important;
+}
+
+.fi-wc-chart canvas {
+    max-height: 350px !important;
+}
+
+.fi-wi-chart .fi-wi-chart-canvas-ctn:not(.fi-wi-chart-canvas-ctn-no-aspect-ratio)[data-chart-type=doughnut],.fi-wi-chart .fi-wi-chart-canvas-ctn:not(.fi-wi-chart-canvas-ctn-no-aspect-ratio)[data-chart-type=pie],.fi-wi-chart .fi-wi-chart-canvas-ctn:not(.fi-wi-chart-canvas-ctn-no-aspect-ratio)[data-chart-type=polarArea],.fi-wi-chart .fi-wi-chart-canvas-ctn:not(.fi-wi-chart-canvas-ctn-no-aspect-ratio)[data-chart-type=radar] {
+    aspect-ratio:1.8 !important;
+}
+
 /*div.it-table-repeater.payments-table div.px-4 table thead tr th:nth-child(1),*/
 /*div.it-table-repeater.products-table div.px-4 table thead tr th:nth-child(2),*/
 /*div.it-table-repeater.expenses-table div.px-4 table thead tr th:nth-child(3),*/

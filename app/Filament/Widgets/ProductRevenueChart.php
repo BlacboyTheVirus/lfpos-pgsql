@@ -78,8 +78,8 @@ class ProductRevenueChart extends ChartWidget
                 [
                     'data' => $data,
                     'backgroundColor' => array_slice($colors, 0, count($data)),
-                    'borderWidth' => 2,
-                    'borderColor' => '#fff',
+                    'borderWidth' => 4,
+                    'borderColor' => null,
                 ]
             ],
             'labels' => $labels,
@@ -95,7 +95,8 @@ class ProductRevenueChart extends ChartWidget
     {
         return [
             'responsive' => true,
-            'maintainAspectRatio' => false,
+            'maintainAspectRatio' => true,
+            'aspectRatio' => 1.8,
             'plugins' => [
                 'legend' => [
                     'position' => 'right',

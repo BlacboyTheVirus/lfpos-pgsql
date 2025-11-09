@@ -95,8 +95,8 @@ class InvoiceTotalsChart extends ChartWidget
 
             $invoices = Invoice::whereBetween('date', [$startOfMonth, $endOfMonth])->get();
 
-            $totalAmount = $invoices->sum('total') / 100;
-            $paidAmount = $invoices->sum('paid') / 100;
+            $totalAmount = $invoices->sum('total') ;
+            $paidAmount = $invoices->sum('paid') ;
             $dueAmount = $totalAmount - $paidAmount;
 
             $labels[] = $date->format('M Y');
@@ -150,8 +150,8 @@ class InvoiceTotalsChart extends ChartWidget
             $dateString = $current->toDateString();
             $invoices = Invoice::whereDate('date', $dateString)->get();
 
-            $totalAmount = $invoices->sum('total') / 100;
-            $paidAmount = $invoices->sum('paid') / 100;
+            $totalAmount = $invoices->sum('total') ;
+            $paidAmount = $invoices->sum('paid') ;
             $dueAmount = $totalAmount - $paidAmount;
 
             $labels[] = $current->format('M j');
@@ -167,15 +167,15 @@ class InvoiceTotalsChart extends ChartWidget
                     'label' => 'Paid Amount',
                     'data' => array_values($chartData['paid']),
                     'backgroundColor' => '#10b981',
-                    'borderColor' => '#059669',
-                    'borderWidth' => 1,
+                    'borderColor' => null,
+                    'borderWidth' => 2,
                 ],
                 [
                     'label' => 'Due Amount',
                     'data' => array_values($chartData['due']),
                     'backgroundColor' => '#ffa20b',
-                    'borderColor' => '#d97706',
-                    'borderWidth' => 1,
+                    'borderColor' => null,
+                    'borderWidth' => 2,
                 ],
             ],
             'labels' => $labels,
@@ -194,8 +194,8 @@ class InvoiceTotalsChart extends ChartWidget
             $monthEnd = $current->copy()->endOfMonth()->toDateString();
             $invoices = Invoice::whereBetween('date', [$monthStart, $monthEnd])->get();
 
-            $totalAmount = $invoices->sum('total') / 100;
-            $paidAmount = $invoices->sum('paid') / 100;
+            $totalAmount = $invoices->sum('total') ;
+            $paidAmount = $invoices->sum('paid') ;
             $dueAmount = $totalAmount - $paidAmount;
 
             $labels[] = $current->format('M Y');
@@ -230,7 +230,8 @@ class InvoiceTotalsChart extends ChartWidget
     {
         return [
             'responsive' => true,
-            'maintainAspectRatio' => false,
+            'maintainAspectRatio' => true,
+            'aspectRatio' => 1.8,
             'plugins' => [
                 'legend' => [
                     'display' => true,
@@ -243,7 +244,7 @@ class InvoiceTotalsChart extends ChartWidget
                 ],
                 'tooltip' => [
                     'mode' => 'index',
-                    'intersect' => false,
+                    'intersect' => true,
                 ]
             ],
             'scales' => [
@@ -269,7 +270,7 @@ class InvoiceTotalsChart extends ChartWidget
                     ],
                     'grid' => [
                         'color' => 'rgba(156, 163, 175, 0.5)',
-                        'lineWidth' => 1,
+                        'lineWidth' => 0.5,
                     ],
                 ],
             ],

@@ -31,6 +31,13 @@ label[for="form.products"] {
     display: none !important;
 }
 
+.it-table-repeater-header{
+    display: none !important;
+}
+
+.it-table-repeater:where(.dark,.dark *) {
+    background-color: transparent !important;
+}
 
 /* Chart height constraints */
 .fi-wc-chart {

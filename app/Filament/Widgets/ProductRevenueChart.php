@@ -67,7 +67,11 @@ class ProductRevenueChart extends ChartWidget
         $totalRevenue = $products->sum('total_revenue');
 
         foreach ($products as $index => $product) {
-            $labels[] = $product->name;
+            // Format the amount for display (convert from cents)
+            $formattedAmount = Setting::formatMoney((int) round($product->total_revenue/100));
+            // Append amount to product name
+            $labels[] = $product->name . ' (' . $formattedAmount . ')';
+
             // Calculate percentage and round to 1 decimal place
             $percentage = $totalRevenue > 0 ? ($product->total_revenue / $totalRevenue) * 100 : 0;
             $data[] = round($percentage, 1);
@@ -100,6 +104,15 @@ class ProductRevenueChart extends ChartWidget
             'plugins' => [
                 'legend' => [
                     'position' => 'right',
+                    'labels' => [
+                        'boxWidth' => 12,
+                        'padding' => 15,
+                        'font' => [
+                            'size' => 12,
+                        ],
+                        'usePointStyle' => true,
+                        'pointStyle' => 'circle',
+                    ],
                 ],
             ],
         ];

@@ -25,11 +25,7 @@ class ProductRevenueChart extends ChartWidget
 
     public function getHeading(): string
     {
-        $data = $this->getData();
-        $total = array_sum($data['datasets'][0]['data']);
-        $formattedTotal = Setting::formatMoney((int) round($total));
-
-        return "Product Revenue Distribution ({$formattedTotal})";
+        return "Product Revenue Distribution (%)";
     }
 
     protected function getData(): array
@@ -67,10 +63,14 @@ class ProductRevenueChart extends ChartWidget
             'rgb(14, 165, 233)',   // sky
         ];
 
+        // Calculate total revenue for percentage calculation
+        $totalRevenue = $products->sum('total_revenue');
+
         foreach ($products as $index => $product) {
-            $amount = $product->total_revenue / 100;
             $labels[] = $product->name;
-            $data[] = round($amount, 2);
+            // Calculate percentage and round to 1 decimal place
+            $percentage = $totalRevenue > 0 ? ($product->total_revenue / $totalRevenue) * 100 : 0;
+            $data[] = round($percentage, 1);
         }
 
         return [

@@ -39,6 +39,10 @@ label[for="form.products"] {
     background-color: transparent !important;
 }
 
+.it-table-repeater>div>table {
+    margin-inline: 0 !important;
+ }
+
 /* Chart height constraints */
 .fi-wc-chart {
     max-height: 350px !important;

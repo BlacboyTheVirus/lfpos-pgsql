@@ -22,7 +22,7 @@ class CreateInvoice extends CreateRecord
             ->label('Save & create another');
     }
 
-    public function addProductToForm($productId, $productName, $unitPrice, $defaultWidth): void
+    public function addProductToForm($productId, $productName, $unitPrice, $defaultWidth, $minimumAmount): void
     {
         $currentProducts = $this->data['products'] ?? [];
 
@@ -33,6 +33,7 @@ class CreateInvoice extends CreateRecord
             'height' => 1.0,
             'unit_price' => $unitPrice,
             'quantity' => 1,
+            'minimum_amount' => $minimumAmount,
             'product_amount' => number_format($defaultWidth * 1.0 * $unitPrice * 1, 0, '.', ''),
         ];
 

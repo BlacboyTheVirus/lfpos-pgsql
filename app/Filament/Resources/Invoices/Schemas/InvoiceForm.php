@@ -161,7 +161,7 @@ class InvoiceForm
 
                                 View::make('filament.components.product-selector')
                                     ->viewData([
-                                        'products' => Product::active()->get(),
+                                        'products' => Product::getCachedActive(),
                                     ]),
 
                                 TableRepeater::make('products')

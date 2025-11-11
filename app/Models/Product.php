@@ -47,6 +47,30 @@ class Product extends Model
     }
 
     /**
+     * Get cached active products with essential fields for forms.
+     * Cache duration: 1 hour
+     */
+    public static function getCachedActive(): \Illuminate\Support\Collection
+    {
+        $cacheKey = 'products.active.with-details';
+
+        return \Cache::remember($cacheKey, 3600, function () {
+            return static::active()
+                ->select(['id', 'code', 'name', 'unit', 'price', 'minimum_amount', 'default_width'])
+                ->orderBy('name')
+                ->get();
+        });
+    }
+
+    /**
+     * Forget the active products cache.
+     */
+    public static function forgetActiveProductsCache(): void
+    {
+        \Cache::forget('products.active.with-details');
+    }
+
+    /**
      * Boot the model.
      */
     protected static function boot(): void
@@ -62,6 +86,15 @@ class Product extends Model
             if (empty($model->code)) {
                 $model->code = self::generateNewCode();
             }
+        });
+
+        // Clear cache when product is created, updated, deleted, or status changes
+        static::saved(function ($model) {
+            self::forgetActiveProductsCache();
+        });
+
+        static::deleted(function ($model) {
+            self::forgetActiveProductsCache();
         });
     }
 

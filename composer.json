@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2",
         "ext-intl": "*",
+        "barryvdh/laravel-dompdf": "^3.1",
         "defstudio/filament-searchable-input": "^4.0",
         "filament/filament": "^4.1",
         "icetalker/filament-table-repeater": "^2.0",

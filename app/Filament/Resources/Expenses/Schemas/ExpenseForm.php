@@ -65,6 +65,7 @@ class ExpenseForm
                         SearchableInput::make('description')
                             ->label('Description')
                             ->required()
+                            ->autocomplete(false)
                             ->maxLength(255)
                             ->placeholder('Enter expense description')
                             ->searchUsing(function (string $search) {

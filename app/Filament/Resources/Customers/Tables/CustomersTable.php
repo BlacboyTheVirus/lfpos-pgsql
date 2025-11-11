@@ -5,17 +5,19 @@ namespace App\Filament\Resources\Customers\Tables;
 use App\Models\Setting;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 
 class CustomersTable
 {
@@ -158,6 +160,212 @@ class CustomersTable
                         return $indicators;
                     }),
             ])
+            ->headerActions([
+                ActionGroup::make([
+                    Action::make('export-csv')
+                        ->label('Export CSV')
+                        ->icon(Heroicon::OutlinedDocumentText)
+                        ->color('primary')
+                        ->action(function (array $data) {
+                            // Get filtered customers
+                            $customers = \App\Models\Customer::query()
+                                ->with(['invoices', 'createdBy'])
+                                ->withCount('invoices')
+                                ->withSum('invoices', 'total')
+                                ->withSum('invoices', 'due')
+                                ->when($data['tableFilters']['name'] ?? null, function ($query, $customerId) {
+                                    $query->where('id', $customerId);
+                                })
+                                ->when($data['tableFilters']['created_by'] ?? null, function ($query, $createdBy) {
+                                    $query->where('created_by', $createdBy);
+                                })
+                                ->when($data['tableFilters']['created_at'] ?? null, function ($query, $dateData) {
+                                    if ($dateData['created_from'] ?? null) {
+                                        $query->whereDate('created_at', '>=', $dateData['created_from']);
+                                    }
+                                    if ($dateData['created_to'] ?? null) {
+                                        $query->whereDate('created_at', '<=', $dateData['created_to']);
+                                    }
+                                })
+                                ->orderBy('created_at', 'desc')
+                                ->get();
+
+                            // Generate CSV
+                            $filename = 'customers-export-'.now()->format('Y-m-d_H-i-s').'.csv';
+
+                            $headers = [
+                                'Content-Type' => 'text/csv',
+                                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+                            ];
+
+                            $callback = function () use ($customers) {
+                                $file = fopen('php://output', 'w');
+
+                                // Add CSV header
+                                fputcsv($file, [
+                                    'Customer Code',
+                                    'Name',
+                                    'Phone',
+                                    'Email',
+                                    'Address',
+                                    'Total Invoices',
+                                    'Total Invoice Amount',
+                                    'Total Due',
+                                    'Created By',
+                                    'Created At',
+                                ]);
+
+                                // Add data rows
+                                foreach ($customers as $customer) {
+                                    fputcsv($file, [
+                                        $customer->code,
+                                        $customer->name,
+                                        $customer->phone ?? '',
+                                        $customer->email ?? '',
+                                        $customer->address ?? '',
+                                        $customer->invoices_count ?? 0,
+                                        number_format(($customer->invoices_sum_total ?? 0) / 100, 2, '.', ''),
+                                        number_format(($customer->invoices_sum_due ?? 0) / 100, 2, '.', ''),
+                                        $customer->createdBy?->name ?? 'System',
+                                        $customer->created_at?->format('Y-m-d H:i:s') ?? '',
+                                    ]);
+                                }
+
+                                fclose($file);
+                            };
+
+                            return response()->stream($callback, 200, $headers);
+                        }),
+
+                    Action::make('export-excel')
+                        ->label('Export Excel')
+                        ->icon(Heroicon::OutlinedTableCells)
+                        ->color('success')
+                        ->action(function (array $data) {
+                            // Get filtered customers
+                            $customers = \App\Models\Customer::query()
+                                ->with(['invoices', 'createdBy'])
+                                ->withCount('invoices')
+                                ->withSum('invoices', 'total')
+                                ->withSum('invoices', 'due')
+                                ->when($data['tableFilters']['name'] ?? null, function ($query, $customerId) {
+                                    $query->where('id', $customerId);
+                                })
+                                ->when($data['tableFilters']['created_by'] ?? null, function ($query, $createdBy) {
+                                    $query->where('created_by', $createdBy);
+                                })
+                                ->when($data['tableFilters']['created_at'] ?? null, function ($query, $dateData) {
+                                    if ($dateData['created_from'] ?? null) {
+                                        $query->whereDate('created_at', '>=', $dateData['created_from']);
+                                    }
+                                    if ($dateData['created_to'] ?? null) {
+                                        $query->whereDate('created_at', '<=', $dateData['created_to']);
+                                    }
+                                })
+                                ->orderBy('created_at', 'desc')
+                                ->get();
+
+                            // Generate Excel file using OpenSpout
+                            $filename = 'customers-export-'.now()->format('Y-m-d_H-i-s').'.xlsx';
+
+                            $headers = [
+                                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+                            ];
+
+                            $callback = function () use ($customers) {
+                                $writer = new \OpenSpout\Writer\XLSX\Writer;
+                                $writer->openToFile('php://output');
+
+                                // Add header row
+                                $headerRow = \OpenSpout\Common\Entity\Row::fromValues([
+                                    'Customer Code',
+                                    'Name',
+                                    'Phone',
+                                    'Email',
+                                    'Address',
+                                    'Total Invoices',
+                                    'Total Invoice Amount',
+                                    'Total Due',
+                                    'Created By',
+                                    'Created At',
+                                ]);
+                                $writer->addRow($headerRow);
+
+                                // Add data rows
+                                foreach ($customers as $customer) {
+                                    $row = \OpenSpout\Common\Entity\Row::fromValues([
+                                        $customer->code,
+                                        $customer->name,
+                                        $customer->phone ?? '',
+                                        $customer->email ?? '',
+                                        $customer->address ?? '',
+                                        $customer->invoices_count ?? 0,
+                                        (float) (($customer->invoices_sum_total ?? 0) / 100),
+                                        (float) (($customer->invoices_sum_due ?? 0) / 100),
+                                        $customer->createdBy?->name ?? 'System',
+                                        $customer->created_at?->format('Y-m-d H:i:s') ?? '',
+                                    ]);
+                                    $writer->addRow($row);
+                                }
+
+                                $writer->close();
+                            };
+
+                            return response()->stream($callback, 200, $headers);
+                        }),
+
+                    Action::make('export-pdf')
+                        ->label('Export PDF')
+                        ->icon(Heroicon::OutlinedDocumentArrowDown)
+                        ->color('info')
+                        ->action(function (array $data) {
+                            // Get filtered customers
+                            $customers = \App\Models\Customer::query()
+                                ->with(['invoices', 'createdBy'])
+                                ->withCount('invoices')
+                                ->withSum('invoices', 'total')
+                                ->withSum('invoices', 'due')
+                                ->when($data['tableFilters']['name'] ?? null, function ($query, $customerId) {
+                                    $query->where('id', $customerId);
+                                })
+                                ->when($data['tableFilters']['created_by'] ?? null, function ($query, $createdBy) {
+                                    $query->where('created_by', $createdBy);
+                                })
+                                ->when($data['tableFilters']['created_at'] ?? null, function ($query, $dateData) {
+                                    if ($dateData['created_from'] ?? null) {
+                                        $query->whereDate('created_at', '>=', $dateData['created_from']);
+                                    }
+                                    if ($dateData['created_to'] ?? null) {
+                                        $query->whereDate('created_at', '<=', $dateData['created_to']);
+                                    }
+                                })
+                                ->orderBy('created_at', 'desc')
+                                ->get();
+
+                            // Generate PDF
+                            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.customers-pdf', [
+                                'customers' => $customers,
+                                'filters' => $data['tableFilters'] ?? [],
+                                'currentPage' => 1,
+                                'totalPages' => 1,
+                            ]);
+
+                            $filename = 'customers-export-'.now()->format('Y-m-d_H-i-s').'.pdf';
+
+                            return response()->streamDownload(function () use ($pdf) {
+                                echo $pdf->output();
+                            }, $filename, [
+                                'Content-Type' => 'application/pdf',
+                                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+                            ]);
+                        }),
+                ])
+                    ->label('Export')
+                    ->icon(Heroicon::OutlinedArrowDownTray)
+                    ->color('primary')
+                    ->dropdown(),
+            ])
             ->recordActions([
                 ActionGroup::make([
                     Action::make('view')
@@ -205,11 +413,214 @@ class CustomersTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->requiresConfirmation()
-                        ->modalHeading('Delete Selected Customers')
-                        ->modalDescription('Are you sure you want to delete the selected customers? This action cannot be undone.'),
-                ]),
+                    BulkAction::make('delete')
+                        ->label('Delete Selected')
+                        ->icon(Heroicon::OutlinedTrash)
+                        ->color('danger')
+                        ->modalHeading('Delete Customers')
+                        ->modalDescription('This action will permanently delete the selected customers. This cannot be undone.')
+                        ->modalSubmitActionLabel('Delete Customers')
+                        ->modalWidth('sm')
+                        ->modalAlignment('center')
+                        ->form([
+                            TextInput::make('confirmation')
+                                ->label('Type "DELETE" to confirm')
+                                ->placeholder('DELETE')
+                                ->required()
+                                ->rules(['in:DELETE'])
+                                ->validationMessages([
+                                    'in' => 'You must type "DELETE" exactly to confirm deletion.',
+                                ])
+                                ->helperText('This action cannot be undone. Type "DELETE" to confirm.')
+                                ->autofocus(),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            if ($data['confirmation'] !== 'DELETE') {
+                                return;
+                            }
+                            $records->each(function ($record) {
+                                $record->delete();
+                            });
+                            \Filament\Notifications\Notification::make()
+                                ->title('Customers Deleted')
+                                ->body(count($records).' customer(s) have been deleted successfully.')
+                                ->success()
+                                ->send();
+                        }),
+
+                    Action::make('export-selected-csv')
+                        ->label('Export Selected CSV')
+                        ->icon(Heroicon::OutlinedDocumentText)
+                        ->color('primary')
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function (array $data) {
+                            // Get selected records
+                            $records = collect($data['selectedTableRecords']);
+                            $customerIds = $records->map(fn ($record) => $record['id'])->toArray();
+
+                            $customers = \App\Models\Customer::whereIn('id', $customerIds)
+                                ->with(['invoices', 'createdBy'])
+                                ->withCount('invoices')
+                                ->withSum('invoices', 'total')
+                                ->withSum('invoices', 'due')
+                                ->orderBy('created_at', 'desc')
+                                ->get();
+
+                            // Generate CSV
+                            $filename = 'selected-customers-'.now()->format('Y-m-d_H-i-s').'.csv';
+
+                            $headers = [
+                                'Content-Type' => 'text/csv',
+                                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+                            ];
+
+                            $callback = function () use ($customers) {
+                                $file = fopen('php://output', 'w');
+
+                                // Add CSV header
+                                fputcsv($file, [
+                                    'Customer Code',
+                                    'Name',
+                                    'Phone',
+                                    'Email',
+                                    'Address',
+                                    'Total Invoices',
+                                    'Total Invoice Amount',
+                                    'Total Due',
+                                    'Created By',
+                                    'Created At',
+                                ]);
+
+                                // Add data rows
+                                foreach ($customers as $customer) {
+                                    fputcsv($file, [
+                                        $customer->code,
+                                        $customer->name,
+                                        $customer->phone ?? '',
+                                        $customer->email ?? '',
+                                        $customer->address ?? '',
+                                        $customer->invoices_count ?? 0,
+                                        number_format(($customer->invoices_sum_total ?? 0) / 100, 2, '.', ''),
+                                        number_format(($customer->invoices_sum_due ?? 0) / 100, 2, '.', ''),
+                                        $customer->createdBy?->name ?? 'System',
+                                        $customer->created_at?->format('Y-m-d H:i:s') ?? '',
+                                    ]);
+                                }
+
+                                fclose($file);
+                            };
+
+                            return response()->stream($callback, 200, $headers);
+                        }),
+
+                    Action::make('export-selected-excel')
+                        ->label('Export Selected Excel')
+                        ->icon(Heroicon::OutlinedTableCells)
+                        ->color('success')
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function (array $data) {
+                            // Get selected records
+                            $records = collect($data['selectedTableRecords']);
+                            $customerIds = $records->map(fn ($record) => $record['id'])->toArray();
+
+                            $customers = \App\Models\Customer::whereIn('id', $customerIds)
+                                ->with(['invoices', 'createdBy'])
+                                ->withCount('invoices')
+                                ->withSum('invoices', 'total')
+                                ->withSum('invoices', 'due')
+                                ->orderBy('created_at', 'desc')
+                                ->get();
+
+                            // Generate Excel file using OpenSpout
+                            $filename = 'selected-customers-'.now()->format('Y-m-d_H-i-s').'.xlsx';
+
+                            $headers = [
+                                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+                            ];
+
+                            $callback = function () use ($customers) {
+                                $writer = new \OpenSpout\Writer\XLSX\Writer;
+                                $writer->openToFile('php://output');
+
+                                // Add header row
+                                $headerRow = \OpenSpout\Common\Entity\Row::fromValues([
+                                    'Customer Code',
+                                    'Name',
+                                    'Phone',
+                                    'Email',
+                                    'Address',
+                                    'Total Invoices',
+                                    'Total Invoice Amount',
+                                    'Total Due',
+                                    'Created By',
+                                    'Created At',
+                                ]);
+                                $writer->addRow($headerRow);
+
+                                // Add data rows
+                                foreach ($customers as $customer) {
+                                    $row = \OpenSpout\Common\Entity\Row::fromValues([
+                                        $customer->code,
+                                        $customer->name,
+                                        $customer->phone ?? '',
+                                        $customer->email ?? '',
+                                        $customer->address ?? '',
+                                        $customer->invoices_count ?? 0,
+                                        (float) (($customer->invoices_sum_total ?? 0) / 100),
+                                        (float) (($customer->invoices_sum_due ?? 0) / 100),
+                                        $customer->createdBy?->name ?? 'System',
+                                        $customer->created_at?->format('Y-m-d H:i:s') ?? '',
+                                    ]);
+                                    $writer->addRow($row);
+                                }
+
+                                $writer->close();
+                            };
+
+                            return response()->stream($callback, 200, $headers);
+                        }),
+
+                    Action::make('export-selected-pdf')
+                        ->label('Export Selected PDF')
+                        ->icon(Heroicon::OutlinedDocumentArrowDown)
+                        ->color('info')
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function (array $data) {
+                            // Get selected records
+                            $records = collect($data['selectedTableRecords']);
+                            $customerIds = $records->map(fn ($record) => $record['id'])->toArray();
+
+                            $customers = \App\Models\Customer::whereIn('id', $customerIds)
+                                ->with(['invoices', 'createdBy'])
+                                ->withCount('invoices')
+                                ->withSum('invoices', 'total')
+                                ->withSum('invoices', 'due')
+                                ->orderBy('created_at', 'desc')
+                                ->get();
+
+                            // Generate PDF
+                            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.customers-pdf', [
+                                'customers' => $customers,
+                                'filters' => $data['tableFilters'] ?? [],
+                                'currentPage' => 1,
+                                'totalPages' => 1,
+                            ]);
+
+                            $filename = 'selected-customers-'.now()->format('Y-m-d_H-i-s').'.pdf';
+
+                            return response()->streamDownload(function () use ($pdf) {
+                                echo $pdf->output();
+                            }, $filename, [
+                                'Content-Type' => 'application/pdf',
+                                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+                            ]);
+                        }),
+                ])
+                    ->label('Bulk Actions')
+                    ->icon(Heroicon::OutlinedEllipsisVertical)
+                    ->color('gray')
+                    ->dropdown(),
             ])
             ->deferFilters(false)
             ->deferColumnManager(false)

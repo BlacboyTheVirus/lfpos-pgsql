@@ -4,17 +4,19 @@ namespace App\Filament\Resources\Products\Tables;
 
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 
 class ProductsTable
 {
@@ -137,10 +139,40 @@ class ProductsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->requiresConfirmation()
-                        ->modalHeading('Delete Selected Products')
-                        ->modalDescription('Are you sure you want to delete the selected products? This action cannot be undone.'),
+                    BulkAction::make('delete')
+                        ->label('Delete Selected')
+                        ->icon(Heroicon::OutlinedTrash)
+                        ->color('danger')
+                        ->modalHeading('Delete Products')
+                        ->modalDescription('This action will permanently delete the selected products. This cannot be undone.')
+                        ->modalSubmitActionLabel('Delete Products')
+                        ->modalWidth('sm')
+                        ->modalAlignment('center')
+                        ->form([
+                            TextInput::make('confirmation')
+                                ->label('Type "DELETE" to confirm')
+                                ->placeholder('DELETE')
+                                ->required()
+                                ->rules(['in:DELETE'])
+                                ->validationMessages([
+                                    'in' => 'You must type "DELETE" exactly to confirm deletion.',
+                                ])
+                                ->helperText('This action cannot be undone. Type "DELETE" to confirm.')
+                                ->autofocus(),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            if ($data['confirmation'] !== 'DELETE') {
+                                return;
+                            }
+                            $records->each(function ($record) {
+                                $record->delete();
+                            });
+                            \Filament\Notifications\Notification::make()
+                                ->title('Products Deleted')
+                                ->body(count($records).' product(s) have been deleted successfully.')
+                                ->success()
+                                ->send();
+                        }),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')

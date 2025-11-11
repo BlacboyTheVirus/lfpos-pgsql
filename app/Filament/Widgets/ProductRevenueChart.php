@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class ProductRevenueChart extends ChartWidget
 {
-    use InteractsWithPageFilters, HasDateFiltering;
+    use HasDateFiltering, InteractsWithPageFilters;
 
     protected static ?int $sort = 3;
 
@@ -25,7 +25,7 @@ class ProductRevenueChart extends ChartWidget
 
     public function getHeading(): string
     {
-        return "Product Revenue Distribution (%)";
+        return 'Product Revenue Distribution (%)';
     }
 
     protected function getData(): array
@@ -68,9 +68,9 @@ class ProductRevenueChart extends ChartWidget
 
         foreach ($products as $index => $product) {
             // Format the amount for display (convert from cents)
-            $formattedAmount = Setting::formatMoney((int) round($product->total_revenue/100));
+            $formattedAmount = Setting::formatMoney((int) round($product->total_revenue / 100));
             // Append amount to product name
-            $labels[] = $product->name . ' (' . $formattedAmount . ')';
+            $labels[] = $product->name.' ('.$formattedAmount.')';
 
             // Calculate percentage and round to 1 decimal place
             $percentage = $totalRevenue > 0 ? ($product->total_revenue / $totalRevenue) * 100 : 0;
@@ -84,7 +84,7 @@ class ProductRevenueChart extends ChartWidget
                     'backgroundColor' => array_slice($colors, 0, count($data)),
                     'borderWidth' => 4,
                     'borderColor' => null,
-                ]
+                ],
             ],
             'labels' => $labels,
         ];
@@ -101,6 +101,7 @@ class ProductRevenueChart extends ChartWidget
             'responsive' => true,
             'maintainAspectRatio' => true,
             'aspectRatio' => 1.8,
+            'cutout' => '70%',
             'plugins' => [
                 'legend' => [
                     'position' => 'right',

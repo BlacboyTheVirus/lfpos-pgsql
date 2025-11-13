@@ -1,0 +1,267 @@
+<?php
+
+namespace App\Livewire;
+
+use App\Filament\Resources\Customers\CustomerResource;
+use App\Filament\Resources\Expenses\ExpenseResource;
+use App\Filament\Resources\Invoices\InvoiceResource;
+use App\Filament\Resources\Products\ProductResource;
+use App\Filament\Resources\Users\UserResource;
+use App\Filament\Pages\Dashboard;
+use Livewire\Component;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Session;
+
+class CommandPalette extends Component
+{
+    protected $listeners = ['open' => 'open'];
+
+    public bool $isOpen = false;
+    public string $search = '';
+    public array $navigationItems = [];
+    public array $recentItems = [];
+    public int $selectedIndex = 0;
+    public array $filteredItems = [];
+
+    public function mount()
+    {
+        $this->initializeNavigationItems();
+        $this->loadRecentItems();
+    }
+
+    public function initializeNavigationItems()
+    {
+        $this->navigationItems = [
+            [
+                'type' => 'navigation',
+                'title' => 'Dashboard',
+                'description' => 'View dashboard overview',
+                'icon' => 'heroicon-o-home',
+                'url' => Dashboard::getUrl(),
+                'keywords' => ['home', 'dashboard', 'overview'],
+            ],
+            [
+                'type' => 'navigation',
+                'title' => 'Customers',
+                'description' => 'Manage customers',
+                'icon' => 'heroicon-o-users',
+                'url' => CustomerResource::getUrl('index'),
+                'keywords' => ['customer', 'clients', 'people'],
+            ],
+            [
+                'type' => 'navigation',
+                'title' => 'Invoices',
+                'description' => 'Manage invoices',
+                'icon' => 'heroicon-o-document-text',
+                'url' => InvoiceResource::getUrl('index'),
+                'keywords' => ['invoice', 'billing', 'payments'],
+            ],
+            [
+                'type' => 'navigation',
+                'title' => 'Products',
+                'description' => 'Manage products',
+                'icon' => 'heroicon-o-cube',
+                'url' => ProductResource::getUrl('index'),
+                'keywords' => ['product', 'inventory', 'items'],
+            ],
+            [
+                'type' => 'navigation',
+                'title' => 'Expenses',
+                'description' => 'Manage expenses',
+                'icon' => 'heroicon-o-receipt-percent',
+                'url' => ExpenseResource::getUrl('index'),
+                'keywords' => ['expense', 'costs', 'spending'],
+            ],
+            [
+                'type' => 'navigation',
+                'title' => 'Users',
+                'description' => 'Manage users',
+                'icon' => 'heroicon-o-user-group',
+                'url' => UserResource::getUrl('index'),
+                'keywords' => ['user', 'staff', 'team'],
+            ],
+            [
+                'type' => 'action',
+                'title' => 'Create Invoice',
+                'description' => 'Create a new invoice',
+                'icon' => 'heroicon-o-plus-circle',
+                'url' => InvoiceResource::getUrl('create'),
+                'keywords' => ['new', 'create', 'add', 'invoice'],
+            ],
+            [
+                'type' => 'action',
+                'title' => 'New Customer',
+                'description' => 'Add a new customer',
+                'icon' => 'heroicon-o-user-plus',
+                'url' => CustomerResource::getUrl('create'),
+                'keywords' => ['new', 'create', 'add', 'customer'],
+            ],
+            [
+                'type' => 'action',
+                'title' => 'Add Product',
+                'description' => 'Add a new product',
+                'icon' => 'heroicon-o-cube',
+                'url' => ProductResource::getUrl('create'),
+                'keywords' => ['new', 'create', 'add', 'product'],
+            ],
+            [
+                'type' => 'action',
+                'title' => 'New Expense',
+                'description' => 'Add a new expense',
+                'icon' => 'heroicon-o-plus-circle',
+                'url' => ExpenseResource::getUrl('create'),
+                'keywords' => ['new', 'create', 'add', 'expense'],
+            ],
+        ];
+    }
+
+    public function loadRecentItems()
+    {
+        $this->recentItems = Session::get('command_palette_recent', []);
+    }
+
+    public function open()
+    {
+        $this->isOpen = true;
+        $this->search = '';
+        $this->selectedIndex = 0;
+        $this->filteredItems = $this->getAllItems();
+        $this->dispatch('open-command-palette');
+    }
+
+    public function close()
+    {
+        $this->isOpen = false;
+        $this->search = '';
+        $this->selectedIndex = 0;
+        $this->filteredItems = [];
+        $this->dispatch('close-command-palette');
+    }
+
+    public function updatedSearch()
+    {
+        $this->filterItems();
+        $this->selectedIndex = 0;
+    }
+
+    public function getAllItems(): array
+    {
+        return array_merge(
+            array_slice($this->recentItems, 0, 5),
+            $this->navigationItems
+        );
+    }
+
+    public function filterItems()
+    {
+        $search = strtolower(trim($this->search));
+
+        if (empty($search)) {
+            $this->filteredItems = $this->getAllItems();
+            return;
+        }
+
+        $this->filteredItems = [];
+
+        // Search in recent items
+        foreach ($this->recentItems as $item) {
+            if ($this->itemMatchesSearch($item, $search)) {
+                $this->filteredItems[] = $item;
+            }
+        }
+
+        // Search in navigation items
+        foreach ($this->navigationItems as $item) {
+            if ($this->itemMatchesSearch($item, $search)) {
+                $this->filteredItems[] = $item;
+            }
+        }
+    }
+
+    private function itemMatchesSearch(array $item, string $search): bool
+    {
+        $title = strtolower($item['title']);
+        $description = strtolower($item['description'] ?? '');
+        $keywords = $item['keywords'] ?? [];
+
+        if (str_contains($title, $search)) {
+            return true;
+        }
+
+        if (str_contains($description, $search)) {
+            return true;
+        }
+
+        foreach ($keywords as $keyword) {
+            if (str_contains($keyword, $search)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function selectItem()
+    {
+        if (!isset($this->filteredItems[$this->selectedIndex])) {
+            return;
+        }
+
+        $item = $this->filteredItems[$this->selectedIndex];
+
+        // Track recent item
+        $this->trackRecentItem($item);
+
+        // Navigate to URL
+        $this->redirect($item['url']);
+        $this->close();
+    }
+
+    public function trackRecentItem(array $item)
+    {
+        // Remove if already exists
+        $this->recentItems = array_filter($this->recentItems, function ($recent) use ($item) {
+            return $recent['url'] !== $item['url'];
+        });
+
+        // Add to beginning
+        array_unshift($this->recentItems, $item);
+
+        // Keep only last 10
+        $this->recentItems = array_slice($this->recentItems, 0, 10);
+
+        // Save to session
+        Session::put('command_palette_recent', $this->recentItems);
+    }
+
+    public function incrementIndex()
+    {
+        if ($this->selectedIndex < count($this->filteredItems) - 1) {
+            $this->selectedIndex++;
+        }
+    }
+
+    public function decrementIndex()
+    {
+        if ($this->selectedIndex > 0) {
+            $this->selectedIndex--;
+        }
+    }
+
+    public function selectItemByIndex(int $index)
+    {
+        if (isset($this->filteredItems[$index])) {
+            $this->selectedIndex = $index;
+            $this->selectItem();
+        }
+    }
+
+    public function render()
+    {
+        if ($this->isOpen) {
+            $this->filterItems();
+        }
+
+        return view('livewire.command-palette');
+    }
+}

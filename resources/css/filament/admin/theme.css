@@ -107,6 +107,12 @@ label[for="form.products"] {
 [x-show="isOpen"] {
     z-index: 999999 !important;
 }
+.global-search-container {
+    position: fixed !important;
+    top: 0 !important;
+}
+
+
 
 
 

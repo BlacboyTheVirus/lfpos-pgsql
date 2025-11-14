@@ -11,6 +11,7 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 class ExpenseResource extends Resource
@@ -28,6 +29,28 @@ class ExpenseResource extends Resource
     protected static ?int $navigationSort = 30;
 
     protected static string|UnitEnum|null $navigationGroup = 'Financial';
+
+    protected static ?string $recordTitleAttribute = 'description';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['code', 'description', 'category'];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return [
+            'Code' => $record->code,
+            'Category' => $record->category->getLabel(),
+            'Amount' => '₦'.number_format($record->amount / 100, 2),
+            'Date' => $record->date->format('M j, Y'),
+        ];
+    }
+
+    public static function getGlobalSearchResultUrl(Model $record): string
+    {
+        return static::getUrl('index');
+    }
 
     public static function form(Schema $schema): Schema
     {

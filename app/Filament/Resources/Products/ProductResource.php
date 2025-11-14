@@ -11,6 +11,7 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 class ProductResource extends Resource
@@ -28,6 +29,27 @@ class ProductResource extends Resource
     protected static ?int $navigationSort = 60;
 
     protected static string|UnitEnum|null $navigationGroup = 'Sales';
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['code', 'name', 'description', 'unit'];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return [
+            'Code' => $record->code,
+            'Unit' => $record->unit,
+            'Price' => '₦'.number_format($record->price / 100, 2),
+        ];
+    }
+
+    public static function getGlobalSearchResultUrl(Model $record): string
+    {
+        return static::getUrl('index');
+    }
 
     public static function form(Schema $schema): Schema
     {

@@ -71,39 +71,44 @@
              @click.stop>
             {{-- Search Input --}}
             <div class="global-search-input-container bg-white dark:bg-gray-900 rounded-t-xl shadow-xl">
-                <div class="flex items-center px-4 py-3">
-                    <x-heroicon-o-magnifying-glass class="h-5 w-5 text-gray-400 mr-3" />
+                <div class="flex items-center px-4 py-3.5">
+                    <x-heroicon-o-magnifying-glass class="h-5 w-5 text-gray-400 dark:text-gray-500 mr-3 shrink-0" />
                     <input
                         wire:model.live.debounce.300ms="search"
                         type="text"
                         placeholder="Type a command or search..."
-                        class="flex-1 bg-transparent border-0 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-0 focus:outline-none text-lg "
+                        class="flex-1 bg-transparent border-0 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500 focus:ring-0 focus:outline-none text-base"
                         x-ref="searchInput"
-                        style="border-width: 0px !important;"
+                        style="    font-size: 1.75rem;
+    line-height: 1rem;
+    border-width: 0px !important;
+    margin: 1rem;
+    padding: 0.5rem !important;
+    width: 100%;"
                         x-init="setTimeout(() => $refs.searchInput.focus(), 100)"
                     />
-                    <div class="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded font-medium">
                         esc
                     </div>
                 </div>
             </div>
 
             {{-- Search Results --}}
-            <div class="global-search-results bg-white dark:bg-gray-900 rounded-b-xl border-x border-b border-gray-300 dark:border-gray-600 shadow-xl max-h-96 overflow-y-auto">
+            <div class="global-search-results bg-white dark:bg-gray-900 rounded-b-xl shadow-xl max-h-96 overflow-y-auto">
                 @if($results->isEmpty())
                     {{-- Empty State --}}
                     <div class="p-8 text-center">
                         <x-heroicon-o-magnifying-glass class="h-8 w-8 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                        <p class="text-gray-500 dark:text-gray-400 text-lg font-medium">No results found</p>
-                        <p class="text-gray-400 dark:text-gray-500 text-sm mt-1">Try adjusting your search terms</p>
+                        <p class="text-gray-600 dark:text-gray-400 text-base font-medium">No results found</p>
+                        <p class="text-gray-500 dark:text-gray-500 text-sm mt-1">Try adjusting your search terms</p>
                     </div>
                 @else
                     @php $globalIndex = 0; @endphp
                     @foreach($results as $category)
                         {{-- Category Header --}}
-                        <div class="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide z-50">
-                            <div class="flex items-center" >
-                                <x-dynamic-component :component="$category['icon']" class="h-4 w-4 mr-3" />
+                        <div class="sticky top-0 bg-gray-50 dark:bg-gray-800/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 px-4 py-2.5 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide z-50">
+                            <div class="flex items-center">
+                                <x-dynamic-component :component="$category['icon']" class="h-4 w-4 mr-2.5 text-gray-500 dark:text-gray-500" />
                                 {{ $category['title'] }}
                             </div>
                         </div>
@@ -111,22 +116,20 @@
                         {{-- Category Results --}}
                         @foreach($category['results'] as $result)
                             <div wire:click="selectResult('{{ $result['url'] }}')"
-                                 class="global-search-result flex items-center px-4 py-3 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 {{ $globalIndex === $selectedIndex ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : '' }}">
+                                 class="global-search-result flex items-center px-4 py-3 cursor-pointer border-b border-gray-100 dark:border-gray-800 last:border-b-0 {{ $globalIndex === $selectedIndex ? 'bg-teal-50 dark:bg-teal-900/10 border-teal-200 dark:border-teal-800/30' : '' }}">
 
-
-
-                                <div class="flex-shrink-0 mr-6" style="margin-right: 0.5rem;">
-                                    <div class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center ">
-                                        <x-dynamic-component :component="$result['icon']" class="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                                <div class="shrink-0 mr-3">
+                                    <div class="w-8 h-8 rounded-lg bg-transparent flex items-center justify-center">
+                                        <x-dynamic-component :component="$result['icon']" class="h-4 w-4 text-gray-500 dark:text-gray-400" />
                                     </div>
                                 </div>
 
-                                <div class="flex-1 min-w-0 pl-2">
-                                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400  truncate">
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate {{ $globalIndex === $selectedIndex ? 'text-gray-900 dark:text-white' : '' }}">
                                         {{ $result['title'] }}
                                     </div>
                                     @if(isset($result['subtitle']) && $result['subtitle'])
-                                        <div class="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">
+                                        <div class="text-xs text-gray-500 dark:text-gray-500 truncate mt-0.5">
                                             {{ $result['subtitle'] }}
                                         </div>
                                     @endif
@@ -140,20 +143,20 @@
 
                 {{-- Footer --}}
                 @if($results->isNotEmpty())
-                    <div class="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
+                    <div class="px-4 py-3 bg-gray-50 dark:bg-gray-800/90 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400">
                         <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-4">
-                                <div class="flex items-center" style="padding-right: 0.5rem;">
-                                    <span class="inline-flex items-center px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded text-xs font-medium">↑↓</span>
-                                    <span class="ml-1">to navigate</span>
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs font-medium">↑↓</span>
+                                    <span>to navigate</span>
                                 </div>
-                                <div class="flex items-center" style="padding-right: 0.5rem;">
-                                    <span class="inline-flex items-center px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded text-xs font-medium">↵</span>
-                                    <span class="ml-1">to select</span>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs font-medium">↵</span>
+                                    <span>to select</span>
                                 </div>
-                                <div class="flex items-center">
-                                    <span class="inline-flex items-center px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded text-xs font-medium">esc</span>
-                                    <span class="ml-1">to close</span>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs font-medium">esc</span>
+                                    <span>to close</span>
                                 </div>
                             </div>
                         </div>

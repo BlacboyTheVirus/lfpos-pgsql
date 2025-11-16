@@ -134,10 +134,13 @@ label[for="form.products"] {
 .global-search-result:hover {
     background-color: rgb(249 250 251) !important;
     border-left: 2px solid #5b970e !important;
+
 }
+
 
 .dark .global-search-result:hover {
     background-color: rgb(31 41 55) !important;
+    color: rgb(225, 225, 225) !important;
 }
 
 /* Ensure modal is above everything */
@@ -153,11 +156,20 @@ label[for="form.products"] {
 .search-main {
     font-size: .875rem;
     line-height: 1.25rem;
+    color: rgb(100 100 100) !important;
+}
+.dark .search-main {
+    color: rgb(100 100 100) !important;
 }
 
 .search-description {
     font-size: .75rem;
     line-height: 1rem;
+    color: rgb(161 161 170) !important;
+}
+
+.dark .search-description {
+    color: rgb(100 100 100) !important;
 }
 
 

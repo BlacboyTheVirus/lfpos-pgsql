@@ -101,7 +101,7 @@
                     @php $globalIndex = 0; @endphp
                     @foreach($results as $category)
                         {{-- Category Header --}}
-                        <div class="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2.5 text-xs font-semibold text-gray-600 dark:text-gray-400  uppercase tracking-wide  z-50">
+                        <div class="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2.5 text-xs font-semibold text-gray-600 dark:text-gray-400  uppercase tracking-wide  z-50" style="font-size: 0.75rem; padding: 0.5rem;">
                             <div class="flex items-center">
                                 <x-dynamic-component :component="$category['icon']" class="h-4 w-4 mr-2.5 text-gray-500 dark:text-gray-500" />
                                 {{ $category['title'] }}
@@ -114,8 +114,8 @@
                                  class="global-search-result flex items-center px-4 py-3 cursor-pointer border-b border-gray-100 dark:border-gray-800 last:border-b-0 {{ $globalIndex === $selectedIndex ? 'bg-teal-50 dark:bg-teal-900/10 border-teal-200 dark:border-teal-800/30' : '' }}">
 
                                 <div class="shrink-0 mr-3">
-                                    <div class="w-8 h-8 rounded-lg bg-transparent flex items-center justify-center" style="padding: 0.5rem; border: 1px solid #efefef; margin-right: 1rem">
-                                        <x-dynamic-component :component="$result['icon']" class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                                    <div class="w-8 h-8 rounded-lg bg-transparent flex items-center justify-center" style="padding: 0.5rem; border: 1px solid rgb(161 161 170); margin-right: 1rem">
+                                        <x-dynamic-component :component="$result['icon']" class="h-4 w-4 text-gray-500 dark:text-gray-400"  style="color: rgb(161 161 170)"/>
                                     </div>
                                 </div>
 
@@ -138,7 +138,7 @@
 
                 {{-- Footer --}}
                 @if($results->isNotEmpty())
-                    <div class="px-4 py-3 bg-gray-50 dark:bg-gray-800/90 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400">
+                    <div class="px-4 py-3  dark:bg-gray-800/90 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400" style="font-size: 0.75rem; padding: 0.875rem;">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-4">
                                 <div class="flex items-center gap-1.5">

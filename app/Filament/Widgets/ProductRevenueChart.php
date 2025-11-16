@@ -21,6 +21,7 @@ class ProductRevenueChart extends ChartWidget
         'md' => 2,
         'lg' => 2,
         'xl' => 2,
+        '2xl' => 2,
     ];
 
     public function getHeading(): string
@@ -82,7 +83,7 @@ class ProductRevenueChart extends ChartWidget
                 [
                     'data' => $data,
                     'backgroundColor' => array_slice($colors, 0, count($data)),
-                    'borderWidth' => 4,
+                    'borderWidth' => 0,
                     'borderColor' => null,
                 ],
             ],

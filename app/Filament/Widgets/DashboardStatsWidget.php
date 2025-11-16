@@ -17,9 +17,25 @@ class DashboardStatsWidget extends BaseWidget
 
     protected static ?int $sort = 1;
 
-    protected function getColumns(): int
+    protected int|string|array $columnSpan = [
+        'default' => 'full',
+        'sm' => 'full',
+        'md' => 'full',
+        'lg' => 'full',
+        'xl' => 'full',
+        '2xl' => 'full',
+    ];
+
+    protected function getColumns(): int|array
     {
-        return 4;
+        return [
+            'default' => 1,
+            'sm' => 1,
+            'md' => 2,
+            'lg' => 4,
+            'xl' => 4,
+            '2xl' => 4,
+        ];
     }
 
     protected function getStats(): array

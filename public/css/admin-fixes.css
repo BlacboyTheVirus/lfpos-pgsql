@@ -1,0 +1,144 @@
+/* ============================================
+   KEYBOARD SHORTCUT INDICATORS
+   ============================================ */
+
+/* Shortcut indicator base styles */
+.shortcut-indicator {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    z-index: 9999;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+}
+
+/* Show shortcuts when modifier key is pressed */
+.shortcuts-visible .shortcut-indicator {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Shortcut key styling */
+.shortcut-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 20px;
+    padding: 2px 6px;
+    background: rgb(17 24 39); /* bg-gray-900 */
+    color: rgb(255 255 255); /* text-white */
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 4px;
+    border: 1px solid rgb(75 85 99); /* border-gray-600 */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+/* Dark mode shortcut key styling */
+.dark .shortcut-key {
+    background: rgb(55 65 81); /* bg-gray-700 */
+    border-color: rgb(107 114 128); /* border-gray-500 */
+    color: rgb(255 255 255); /* text-white */
+}
+
+/* Button-specific shortcut indicator positioning */
+.shortcut-indicator-button {
+    top: -6px;
+    right: -6px;
+}
+
+/* Input-specific shortcut indicator positioning */
+.shortcut-indicator-input {
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%) scale(0.8);
+}
+
+.shortcuts-visible .shortcut-indicator-input {
+    transform: translateY(-50%) scale(1);
+}
+
+/* Shortcut indicator for global search field - positioned as suffix */
+.fi-global-search-field {
+    position: relative;
+}
+
+.fi-global-search-field .shortcut-indicator {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%) scale(0.8);
+    z-index: 10;
+    pointer-events: none;
+}
+
+.shortcuts-visible .fi-global-search-field .shortcut-indicator {
+    transform: translateY(-50%) scale(1);
+}
+
+/* Make the shortcut key smaller and more inline for search */
+.fi-global-search-field .shortcut-indicator .shortcut-key {
+    min-width: 20px;
+    height: 16px;
+    padding: 1px 4px;
+    font-size: 10px;
+    font-weight: 500;
+    background: rgba(107, 114, 128, 0.1);
+    color: rgb(107, 114, 128);
+    border: 1px solid rgba(107, 114, 128, 0.2);
+    border-radius: 3px;
+}
+
+.dark .fi-global-search-field .shortcut-indicator .shortcut-key {
+    background: rgba(156, 163, 175, 0.1);
+    color: rgb(156, 163, 175);
+    border-color: rgba(156, 163, 175, 0.2);
+}
+
+/* Adjust global search input padding to accommodate indicator */
+.shortcuts-visible .fi-global-search-input {
+    padding-right: 40px !important;
+}
+
+/* Ensure the indicator doesn't interfere with input focus */
+.fi-global-search-input:focus + .shortcut-indicator {
+    opacity: 0.7;
+}
+
+/* Animation for smooth transitions */
+@keyframes shortcut-appear {
+    from {
+        opacity: 0;
+        transform: scale(0.7);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.shortcuts-visible .shortcut-indicator {
+    animation: shortcut-appear 0.15s ease-out;
+}
+
+/* Ensure shortcut indicators don't interfere with button functionality */
+.shortcut-indicator * {
+    pointer-events: none;
+}
+
+/* Special styling for primary buttons */
+.fi-btn-color-primary .shortcut-indicator .shortcut-key {
+    background: rgb(255 255 255); /* bg-white */
+    color: rgb(17 24 39); /* text-gray-900 */
+    border-color: rgb(209 213 219); /* border-gray-300 */
+}
+
+.dark .fi-btn-color-primary .shortcut-indicator .shortcut-key {
+    background: rgb(17 24 39); /* bg-gray-900 */
+    color: rgb(255 255 255); /* text-white */
+    border-color: rgb(75 85 99); /* border-gray-600 */
+}

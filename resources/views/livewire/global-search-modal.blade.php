@@ -101,7 +101,7 @@
                     @php $globalIndex = 0; @endphp
                     @foreach($results as $category)
                         {{-- Category Header --}}
-                        <div class="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2.5 text-xs font-semibold text-gray-600 dark:text-gray-400  uppercase tracking-wide  z-50" style="font-size: 0.75rem; padding: 0.5rem;">
+                        <div class="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2.5 text-xs font-semibold text-gray-600 dark:text-gray-400  uppercase tracking-wide  z-50" style="font-size: 0.75rem; padding: 0.5rem; color: #7f8c8d !important;">
                             <div class="flex items-center">
                                 <x-dynamic-component :component="$category['icon']" class="h-4 w-4 mr-2.5 text-gray-500 dark:text-gray-500" />
                                 {{ $category['title'] }}

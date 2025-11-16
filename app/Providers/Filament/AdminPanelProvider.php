@@ -10,6 +10,8 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\Support\Assets\Css;
+use Filament\Support\Assets\Js;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
 use Filament\View\PanelsRenderHook;
@@ -52,6 +54,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([])
+            ->assets([
+                Css::make('admin-fixes', asset('css/admin-fixes.css')),
+                Js::make('app-js', asset('build/assets/app-91HjQ9be.js')),
+            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -82,6 +88,20 @@ class AdminPanelProvider extends PanelProvider
                         <span class="fi-btn-label">Search</span>
                         <span class="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded ml-2">⌘K</span>
                     </button>
+
+                    <!-- Hidden navigation links for keyboard shortcuts -->
+                    <a href="{{ route(\'filament.admin.resources.expenses.index\') }}"
+                       data-shortcut="e"
+                       class="hidden"
+                       aria-label="Navigate to Expenses"></a>
+                    <a href="{{ route(\'filament.admin.resources.customers.index\') }}"
+                       data-shortcut="u"
+                       class="hidden"
+                       aria-label="Navigate to Customers"></a>
+                    <a href="{{ route(\'filament.admin.resources.products.index\') }}"
+                       data-shortcut="d"
+                       class="hidden"
+                       aria-label="Navigate to Products"></a>
                 ')
             )
             ->renderHook(

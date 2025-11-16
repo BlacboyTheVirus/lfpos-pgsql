@@ -145,7 +145,7 @@ label[for="form.products"] {
 
 /* Ensure modal is above everything */
 [x-show="isOpen"] {
-    z-index: 999999 !important;
+    z-index: 30 !important;
 }
 .global-search-container {
     position: fixed !important;

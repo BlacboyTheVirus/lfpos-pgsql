@@ -82,7 +82,7 @@ class CustomersTable
                     ->formatStateUsing(fn ($state) => Setting::formatMoney((int) round($state / 100)))
                     ->sortable()
                     ->alignment('right')
-                    ->color(fn ($state) => $state > 0 ? 'danger' : 'success')
+                    ->color(fn ($state) => $state > 0 ? 'danger' : '')
                     ->summarize([
                         Sum::make()
                             ->label('Total')

@@ -48,7 +48,7 @@ class CustomerResource extends Resource
 
     public static function getGlobalSearchResultUrl(Model $record): string
     {
-        return static::getUrl('index');
+        return static::getUrl('index') . '?tableAction=view&tableActionRecord=' . $record->id;
     }
 
     public static function form(Schema $schema): Schema

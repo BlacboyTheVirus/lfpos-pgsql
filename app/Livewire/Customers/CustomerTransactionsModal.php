@@ -90,7 +90,7 @@ class CustomerTransactionsModal extends Component implements HasActions, HasForm
                     ->formatStateUsing(fn ($state) => Setting::formatMoney($state))
                     ->alignment('right')
                     ->sortable()
-                    ->color(fn ($state) => $state > 0 ? 'danger' : 'success'),
+                    ->color(fn ($state) => $state > 0 ? '' : ''),
 
                 TextColumn::make('status')
                     ->label('Payment Status')

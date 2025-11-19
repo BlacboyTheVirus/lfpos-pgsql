@@ -17,6 +17,8 @@ class ShortcutIndicators {
         this.bindEvents();
         this.setupShortcuts();
         this.addShortcutAttributesToNavigation();
+        this.addShortcutAttributesToSaveButtons();
+        this.setupMutationObserver();
     }
 
     addShortcutAttributesToNavigation() {
@@ -38,6 +40,68 @@ class ShortcutIndicators {
                 }
             });
         });
+    }
+
+    addShortcutAttributesToSaveButtons() {
+        // Find all Save buttons on the page and tag them with appropriate shortcuts
+        const buttons = document.querySelectorAll('button, [role="button"]');
+
+        buttons.forEach(button => {
+            const text = button.textContent.trim().toLowerCase();
+
+            // Don't add to disabled buttons or logout buttons
+            if (button.disabled || this.isLogoutButton(button)) {
+                return;
+            }
+
+            // Check if this is "Save & create another" button (Cmd+Shift+S)
+            if (text.includes('save') && text.includes('create') && text.includes('another')) {
+                button.setAttribute('data-shortcut', 'shift+s');
+            }
+            // Check if this is a regular Save button (Cmd+S)
+            else if (text === 'save' || text.startsWith('save ')) {
+                button.setAttribute('data-shortcut', 's');
+            }
+        });
+    }
+
+    setupMutationObserver() {
+        // Watch for DOM changes and automatically tag new buttons
+        const observer = new MutationObserver((mutations) => {
+            let shouldUpdate = false;
+
+            mutations.forEach((mutation) => {
+                // Check if any buttons were added or modified
+                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType === 1) { // Element node
+                            // Check if the added node is a button or contains buttons
+                            if (node.matches && (node.matches('button') || node.matches('[role="button"]') ||
+                                node.querySelector('button, [role="button"]'))) {
+                                shouldUpdate = true;
+                            }
+                        }
+                    });
+                }
+            });
+
+            if (shouldUpdate) {
+                // Debounce: wait a bit for multiple mutations
+                clearTimeout(this.mutationTimeout);
+                this.mutationTimeout = setTimeout(() => {
+                    this.addShortcutAttributesToSaveButtons();
+                    this.addShortcutAttributesToNavigation();
+                }, 100);
+            }
+        });
+
+        // Start observing the document body for changes
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        this.observer = observer;
     }
 
     bindEvents() {
@@ -65,6 +129,15 @@ class ShortcutIndicators {
         });
     }
 
+    isLogoutButton(button) {
+        if (!button) return false;
+
+        const text = button.textContent.trim().toLowerCase();
+        const excludedTexts = ['logout', 'sign out', 'signout', 'log out'];
+
+        return excludedTexts.some(excluded => text.includes(excluded));
+    }
+
     setupShortcuts() {
         // Define all keyboard shortcuts
         const shortcuts = {
@@ -78,6 +151,13 @@ class ShortcutIndicators {
             if (e[this.modifierKey]) {
                 const key = e.key.toLowerCase();
 
+                // Handle Cmd+S or Cmd+Shift+S for Save buttons
+                if (key === 's') {
+                    e.preventDefault();
+                    this.handleSaveShortcut(e.shiftKey);
+                    return;
+                }
+
                 if (shortcuts[key]) {
                     e.preventDefault();
                     const element = document.querySelector(shortcuts[key]);
@@ -87,6 +167,54 @@ class ShortcutIndicators {
                 }
             }
         });
+    }
+
+    handleSaveShortcut(isShiftPressed = false) {
+        let saveButton;
+
+        if (isShiftPressed) {
+            // Cmd+Shift+S: Find "Save & create another" button
+            saveButton = document.querySelector('[data-shortcut="shift+s"]');
+
+            if (!saveButton) {
+                // Fallback: Look for buttons with "save" and "create" text
+                const buttons = Array.from(document.querySelectorAll('button, [role="button"]'));
+                saveButton = buttons.find(btn => {
+                    if (this.isLogoutButton(btn)) return false;
+                    const text = btn.textContent.trim().toLowerCase();
+                    return text.includes('save') && text.includes('create') && text.includes('another');
+                });
+            }
+        } else {
+            // Cmd+S: Find primary Save button
+            // Priority order:
+            // 1. Button with data-shortcut="s"
+            // 2. Button with text "Save" (case insensitive, exact match)
+            // 3. Submit buttons in forms
+
+            saveButton = document.querySelector('[data-shortcut="s"]');
+
+            if (!saveButton) {
+                // Look for buttons with exact "Save" text (not "Save & create another")
+                const buttons = Array.from(document.querySelectorAll('button, [role="button"]'));
+                saveButton = buttons.find(btn => {
+                    if (this.isLogoutButton(btn)) return false;
+                    const text = btn.textContent.trim().toLowerCase();
+                    return text === 'save';
+                });
+            }
+
+            if (!saveButton) {
+                // Look for submit buttons in visible forms, but exclude logout buttons
+                const submitButtons = Array.from(document.querySelectorAll('form button[type="submit"]'));
+                saveButton = submitButtons.find(btn => !this.isLogoutButton(btn));
+            }
+        }
+
+        // Final safety check: never click logout buttons
+        if (saveButton && !saveButton.disabled && !this.isLogoutButton(saveButton)) {
+            saveButton.click();
+        }
     }
 
     showShortcuts() {
@@ -125,9 +253,21 @@ class ShortcutIndicators {
     addShortcutIndicator(element, key, isInput = false) {
         const indicator = document.createElement('div');
         indicator.className = 'shortcut-indicator';
+
+        // Handle shift+key shortcuts (e.g., "shift+s" becomes "⌘⇧S")
+        let displayText;
+        if (key.startsWith('shift+')) {
+            const actualKey = key.replace('shift+', '').toUpperCase();
+            displayText = this.isMac
+                ? `${this.modifierSymbol}⇧${actualKey}`
+                : `Ctrl+Shift+${actualKey}`;
+        } else {
+            displayText = `${this.modifierSymbol}${key.toUpperCase()}`;
+        }
+
         indicator.innerHTML = `
             <span class="shortcut-key">
-                ${this.modifierSymbol}${key.toUpperCase()}
+                ${displayText}
             </span>
         `;
 
@@ -144,14 +284,25 @@ class ShortcutIndicators {
     }
 }
 
+// Store instance globally
+let shortcutIndicatorsInstance = null;
+
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    new ShortcutIndicators();
+    shortcutIndicatorsInstance = new ShortcutIndicators();
 });
 
 // Also initialize on Livewire navigation (for SPA-like behavior)
 document.addEventListener('livewire:navigated', () => {
-    new ShortcutIndicators();
+    shortcutIndicatorsInstance = new ShortcutIndicators();
+});
+
+// Re-add shortcut attributes when Livewire updates the DOM
+document.addEventListener('livewire:updated', () => {
+    if (shortcutIndicatorsInstance) {
+        shortcutIndicatorsInstance.addShortcutAttributesToSaveButtons();
+        shortcutIndicatorsInstance.addShortcutAttributesToNavigation();
+    }
 });
 
 // Export for potential external use

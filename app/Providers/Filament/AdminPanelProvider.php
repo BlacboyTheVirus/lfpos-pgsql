@@ -56,7 +56,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([])
             ->assets([
                 Css::make('admin-fixes', asset('css/admin-fixes.css')),
-                Js::make('app-js', asset('build/assets/app-91HjQ9be.js')),
+                Js::make('app-js', asset('build/assets/app-D70hdtKS.js')),
             ])
             ->middleware([
                 EncryptCookies::class,

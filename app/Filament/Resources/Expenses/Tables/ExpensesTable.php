@@ -379,6 +379,7 @@ class ExpensesTable
                                 ->label('Type "DELETE" to confirm')
                                 ->placeholder('DELETE')
                                 ->required()
+                                ->autocomplete(false)
                                 ->rules(['in:DELETE'])
                                 ->validationMessages([
                                     'in' => 'You must type "DELETE" exactly to confirm deletion.',

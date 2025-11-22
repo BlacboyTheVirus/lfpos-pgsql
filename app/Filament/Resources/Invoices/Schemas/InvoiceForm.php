@@ -120,14 +120,6 @@ class InvoiceForm
                                                 $previousDue = $customer->invoices()
                                                     ->where('status', '!=', InvoiceStatus::Paid)
                                                     ->sum('due');
-
-                                                //                                                if ($previousDue > 0) {
-                                                //                                                    Notification::make()
-                                                //                                                        ->title('Customer has outstanding balance')
-                                                //                                                        ->body('Previous due: ₦'.number_format($previousDue / 100, 2))
-                                                //                                                        ->danger()
-                                                //                                                        ->send();
-                                                //                                                }
                                             }
                                             // Dispatch browser event to focus date field
                                             $livewire->dispatch('focus-date-field');
@@ -190,6 +182,21 @@ class InvoiceForm
                                     })
                                     ->default([])
                                     ->minItems(1)
+                                    ->rules([
+                                        function () {
+                                            return function (string $attribute, $value, Closure $fail) {
+                                                if (empty($value) || count($value) === 0) {
+                                                    $fail('At least one product is required to create an invoice.');
+
+                                                    Notification::make()
+                                                        ->title('Products Required')
+                                                        ->body('Please add at least one product to the invoice before saving.')
+                                                        ->warning()
+                                                        ->send();
+                                                }
+                                            };
+                                        },
+                                    ])
                                     ->extraAttributes([
                                         'class' => 'products-table',
                                     ])
@@ -291,6 +298,8 @@ class InvoiceForm
                                     ->reorderable(false)
                                     ->reorderableWithButtons()
                                     ->reorderableWithDragAndDrop(false),
+
+
                             ])
                             ->extraAttributes(['class' => 'product-section']),
 

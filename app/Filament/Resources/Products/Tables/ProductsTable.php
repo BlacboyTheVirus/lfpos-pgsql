@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products\Tables;
 
+use App\Models\Product;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
@@ -10,6 +11,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -17,6 +19,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 class ProductsTable
 {
@@ -111,7 +114,24 @@ class ProductsTable
                         ->slideOver()
                         ->modalWidth('md')
                         ->color('warning')
-                        ->form(\App\Filament\Resources\Products\Schemas\ProductForm::getFormComponents()),
+                        ->form(\App\Filament\Resources\Products\Schemas\ProductForm::getFormComponents())
+                        ->using(function ($record, array $data, EditAction $action): Product {
+                            try {
+                                $record->update($data);
+
+                                return $record;
+                            } catch (UniqueConstraintViolationException $e) {
+                                // Send error notification
+                                Notification::make()
+                                    ->title('Product name already exists')
+                                    ->body('A product with this name already exists (case-insensitive match). Please use a different name.')
+                                    ->danger()
+                                    ->send();
+
+                                // Halt the action to keep the modal open
+                                $action->halt();
+                            }
+                        }),
 
                     Action::make('duplicate')
                         ->label('Duplicate')
@@ -126,8 +146,20 @@ class ProductsTable
                             'description' => $record->description,
                             'is_active' => $record->is_active,
                         ])
-                        ->action(function (array $data) {
-                            \App\Models\Product::create($data);
+                        ->action(function (array $data, Action $action) {
+                            try {
+                                Product::create($data);
+                            } catch (UniqueConstraintViolationException $e) {
+                                // Send error notification
+                                Notification::make()
+                                    ->title('Product already exists')
+                                    ->body('A product with this name already exists (case-insensitive match). Please use a different name.')
+                                    ->danger()
+                                    ->send();
+
+                                // Halt the action to keep the modal open
+                                $action->halt();
+                            }
                         })
                         ->successNotificationTitle('Product duplicated successfully'),
 
@@ -153,6 +185,7 @@ class ProductsTable
                                 ->label('Type "DELETE" to confirm')
                                 ->placeholder('DELETE')
                                 ->required()
+                                ->autocomplete(false)
                                 ->rules(['in:DELETE'])
                                 ->validationMessages([
                                     'in' => 'You must type "DELETE" exactly to confirm deletion.',

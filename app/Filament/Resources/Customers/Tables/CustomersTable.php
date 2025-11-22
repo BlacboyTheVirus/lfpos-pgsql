@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Customers\Tables;
 
+use App\Models\Customer;
 use App\Models\Setting;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -11,6 +12,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
@@ -18,6 +20,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 class CustomersTable
 {
@@ -385,6 +388,23 @@ class CustomersTable
                         ->modalWidth('md')
                         ->color('warning')
                         ->schema(\App\Filament\Resources\Customers\Schemas\CustomerForm::getFormComponents())
+                        ->using(function ($record, array $data, EditAction $action): Customer {
+                            try {
+                                $record->update($data);
+
+                                return $record;
+                            } catch (UniqueConstraintViolationException $e) {
+                                // Send error notification
+                                Notification::make()
+                                    ->title('Customer name already exists')
+                                    ->body('A customer with this name already exists (case-insensitive match). Please use a different name.')
+                                    ->danger()
+                                    ->send();
+
+                                // Halt the action to keep the modal open
+                                $action->halt();
+                            }
+                        })
                         ->hidden(fn ($record) => $record->isWalkin()),
 
                     Action::make('duplicate')
@@ -398,8 +418,20 @@ class CustomersTable
                             'email' => null, // Clear email to avoid duplicates
                             'address' => $record->address,
                         ])
-                        ->action(function (array $data) {
-                            \App\Models\Customer::create($data);
+                        ->action(function (array $data, Action $action) {
+                            try {
+                                Customer::create($data);
+                            } catch (UniqueConstraintViolationException $e) {
+                                // Send error notification
+                                Notification::make()
+                                    ->title('Customer already exists')
+                                    ->body('A customer with this name already exists (case-insensitive match). Please use a different name.')
+                                    ->danger()
+                                    ->send();
+
+                                // Halt the action to keep the modal open
+                                $action->halt();
+                            }
                         })
                         ->successNotificationTitle('Customer duplicated successfully')
                         ->hidden(fn ($record) => $record->isWalkin()),

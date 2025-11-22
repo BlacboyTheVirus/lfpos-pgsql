@@ -16,36 +16,38 @@ class ExpenseInfolist
                 Section::make('Expense Information')
                     ->description('Expense details and specifications')
                     ->schema([
-                        Grid::make(3)
+                        Grid::make(2)
                             ->schema([
                                 TextEntry::make('code')
                                     ->label('Expense Code')
                                     ->copyable()
                                     ->copyMessage('Expense code copied')
-                                    ->badge()
                                     ->color('gray'),
+
+                                TextEntry::make('date')
+                                    ->label('Expense Date')
+                                    ->date('M j, Y'),
+
+
+
+
+                            ]),
+
+                        Grid::make(2)
+                            ->schema([
 
                                 TextEntry::make('category')
                                     ->label('Category')
                                     ->badge()
                                     ->color(fn ($state) => $state?->getColor() ?? 'gray'),
-
-                                TextEntry::make('date')
-                                    ->label('Expense Date')
-                                    ->date('M j, Y')
-                                    ->badge()
-                                    ->color('info'),
-                            ]),
-
-                        Grid::make(2)
-                            ->schema([
+                                
                                 TextEntry::make('amount')
                                     ->label('Amount')
                                     ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
                                     ->weight('semibold')
                                     ->size('lg')
                                     ->color('success')
-                                    ->alignment('right'),
+                                    ->alignment('left'),
 
                                 TextEntry::make('description')
                                     ->label('Description')

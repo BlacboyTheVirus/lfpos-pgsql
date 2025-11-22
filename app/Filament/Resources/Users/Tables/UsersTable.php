@@ -3,13 +3,17 @@
 namespace App\Filament\Resources\Users\Tables;
 
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\TextInput;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 
 class UsersTable
 {
@@ -61,10 +65,41 @@ class UsersTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->requiresConfirmation()
-                        ->modalHeading('Delete Selected Users')
-                        ->modalDescription('Are you sure you want to delete the selected users? This action cannot be undone.'),
+                    BulkAction::make('delete')
+                        ->label('Delete Selected')
+                        ->icon(Heroicon::OutlinedTrash)
+                        ->color('danger')
+                        ->modalHeading('Delete Users')
+                        ->modalDescription('This action will permanently delete the selected users. This cannot be undone.')
+                        ->modalSubmitActionLabel('Delete Users')
+                        ->modalWidth('sm')
+                        ->modalAlignment('center')
+                        ->form([
+                            TextInput::make('confirmation')
+                                ->label('Type "DELETE" to confirm')
+                                ->placeholder('DELETE')
+                                ->required()
+                                ->autocomplete(false)
+                                ->rules(['in:DELETE'])
+                                ->validationMessages([
+                                    'in' => 'You must type "DELETE" exactly to confirm deletion.',
+                                ])
+                                ->helperText('This action cannot be undone. Type "DELETE" to confirm.')
+                                ->autofocus(),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            if ($data['confirmation'] !== 'DELETE') {
+                                return;
+                            }
+                            $records->each(function ($record) {
+                                $record->delete();
+                            });
+                            \Filament\Notifications\Notification::make()
+                                ->title('Users Deleted')
+                                ->body(count($records).' user(s) have been deleted successfully.')
+                                ->success()
+                                ->send();
+                        }),
                 ]),
             ]);
     }

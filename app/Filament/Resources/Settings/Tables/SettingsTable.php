@@ -4,16 +4,19 @@ namespace App\Filament\Resources\Settings\Tables;
 
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 
 class SettingsTable
 {
@@ -166,10 +169,41 @@ class SettingsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->requiresConfirmation()
-                        ->modalHeading('Delete Selected Settings')
-                        ->modalDescription('Are you sure you want to delete the selected settings? This action cannot be undone.'),
+                    BulkAction::make('delete')
+                        ->label('Delete Selected')
+                        ->icon(Heroicon::OutlinedTrash)
+                        ->color('danger')
+                        ->modalHeading('Delete Settings')
+                        ->modalDescription('This action will permanently delete the selected settings. This cannot be undone.')
+                        ->modalSubmitActionLabel('Delete Settings')
+                        ->modalWidth('sm')
+                        ->modalAlignment('center')
+                        ->form([
+                            TextInput::make('confirmation')
+                                ->label('Type "DELETE" to confirm')
+                                ->placeholder('DELETE')
+                                ->required()
+                                ->autocomplete(false)
+                                ->rules(['in:DELETE'])
+                                ->validationMessages([
+                                    'in' => 'You must type "DELETE" exactly to confirm deletion.',
+                                ])
+                                ->helperText('This action cannot be undone. Type "DELETE" to confirm.')
+                                ->autofocus(),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            if ($data['confirmation'] !== 'DELETE') {
+                                return;
+                            }
+                            $records->each(function ($record) {
+                                $record->delete();
+                            });
+                            \Filament\Notifications\Notification::make()
+                                ->title('Settings Deleted')
+                                ->body(count($records).' setting(s) have been deleted successfully.')
+                                ->success()
+                                ->send();
+                        }),
                 ]),
             ])
             ->defaultSort('name')

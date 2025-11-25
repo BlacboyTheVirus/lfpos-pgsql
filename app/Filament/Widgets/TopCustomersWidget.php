@@ -36,22 +36,7 @@ class TopCustomersWidget extends BaseWidget
             ->columns([
                 TextColumn::make('rank')
                     ->label('Rank')
-                    ->getStateUsing(function ($record, $livewire) {
-                        static $rankings = null;
-
-                        // Cache the rankings on first call
-                        if ($rankings === null) {
-                            $customers = $this->getTableQuery()->get();
-                            $rankings = [];
-                            $position = 1;
-
-                            foreach ($customers as $customer) {
-                                $rankings[$customer->id] = $position++;
-                            }
-                        }
-
-                        return $rankings[$record->id] ?? '-';
-                    })
+                    ->getStateUsing(fn ($record) => $record->rank ?? '-')
                     ->badge()
                     ->color('primary')
                     ->alignCenter(),
@@ -118,7 +103,8 @@ class TopCustomersWidget extends BaseWidget
                 customers.created_at,
                 customers.updated_at,
                 SUM(invoices.total) as period_invoices_sum,
-                SUM(invoices.due) as invoices_sum_due
+                SUM(invoices.due) as invoices_sum_due,
+                ROW_NUMBER() OVER (ORDER BY SUM(invoices.total) DESC) as rank
             ')
             ->groupBy('customers.id', 'customers.name', 'customers.email', 'customers.phone', 'customers.address', 'customers.code', 'customers.created_at', 'customers.updated_at')
             ->havingRaw('SUM(invoices.total) > 0')

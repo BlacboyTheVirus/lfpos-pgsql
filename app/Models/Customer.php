@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class Customer extends Model
 {
@@ -87,51 +89,64 @@ class Customer extends Model
                 $model->code = self::generateNewCode();
             }
         });
+
+        // Clear walk-in customer cache when it's saved
+        static::saved(function ($model) {
+            if ($model->isWalkin()) {
+                Cache::forget('customer.walkin');
+            }
+        });
+
+        // Clear walk-in customer cache when it's deleted
+        static::deleted(function ($model) {
+            if ($model->isWalkin()) {
+                Cache::forget('customer.walkin');
+            }
+        });
     }
 
     /**
      * Generate a new unique customer code based on the last customer code.
+     * Uses database transaction and pessimistic locking to prevent race conditions.
      */
     public static function generateNewCode(): string
     {
-        // Get prefix from settings
         $prefix = Setting::get('customer_code_prefix', 'CU-');
         $format = Setting::get('customer_code_format', '%04d');
 
-        // Find the last customer code with this prefix
-        $lastCustomer = static::where('code', 'like', $prefix.'%')
-            ->orderBy('code', 'desc')
-            ->first();
+        return DB::transaction(function () use ($prefix, $format) {
+            // Use pessimistic locking to prevent race conditions
+            $lastCustomer = static::lockForUpdate()
+                ->where('code', 'like', $prefix.'%')
+                ->orderBy('code', 'desc')
+                ->first();
 
-        if ($lastCustomer) {
-            // Extract the number from the last code
-            $lastCode = $lastCustomer->code;
-            $numberPart = str_replace($prefix, '', $lastCode);
-            $nextNumber = (int) $numberPart + 1;
-        } else {
-            // No customers exist yet, start with 1
-            $nextNumber = 1;
-        }
+            $nextNumber = $lastCustomer
+                ? ((int) str_replace($prefix, '', $lastCustomer->code)) + 1
+                : 1;
 
-        return $prefix.sprintf($format, $nextNumber);
+            return $prefix.sprintf($format, $nextNumber);
+        }, 3); // Retry up to 3 times on deadlock
     }
 
     /**
-     * Create or get the walk-in customer
+     * Create or get the walk-in customer with caching
      */
     public static function getWalkinCustomer(): self
     {
         $prefix = Setting::get('customer_code_prefix', 'CU-');
         $walkinCode = $prefix.'0001';
 
-        return static::firstOrCreate(
-            ['code' => $walkinCode],
-            [
-                'name' => 'Walk-in Customer',
-                'phone' => null,
-                'email' => null,
-                'address' => null,
-            ]
-        );
+        return Cache::remember('customer.walkin', 3600, function () use ($walkinCode) {
+            return static::firstOrCreate(
+                ['code' => $walkinCode],
+                [
+                    'name' => 'Walk-in Customer',
+                    'phone' => null,
+                    'email' => null,
+                    'address' => null,
+                ]
+            );
+        });
     }
 }

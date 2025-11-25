@@ -28,6 +28,9 @@ class InvoicesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(function ($query) {
+                return $query->with(['customer', 'createdBy']);
+            })
             ->columns([
                 TextColumn::make('code')
                     ->label('Invoice Code')
@@ -203,7 +206,7 @@ class InvoicesTable
                         ->action(function (array $data) {
                             // Get filtered invoices
                             $invoices = \App\Models\Invoice::query()
-                                ->with(['customer', 'createdBy'])
+                                ->with(['customer:id,name', 'createdBy:id,name'])
                                 ->when($data['tableFilters']['status'] ?? null, function ($query, $status) {
                                     if ($status === 'outstanding') {
                                         return $query->whereIn('status', [\App\Enums\InvoiceStatus::Unpaid, \App\Enums\InvoiceStatus::Partial]);
@@ -284,7 +287,7 @@ class InvoicesTable
                         ->action(function (array $data) {
                             // Get filtered invoices
                             $invoices = \App\Models\Invoice::query()
-                                ->with(['customer', 'createdBy'])
+                                ->with(['customer:id,name', 'createdBy:id,name'])
                                 ->when($data['tableFilters']['status'] ?? null, function ($query, $status) {
                                     if ($status === 'outstanding') {
                                         return $query->whereIn('status', [\App\Enums\InvoiceStatus::Unpaid, \App\Enums\InvoiceStatus::Partial]);
@@ -368,7 +371,7 @@ class InvoicesTable
                         ->action(function (array $data) {
                             // Get filtered invoices
                             $invoices = \App\Models\Invoice::query()
-                                ->with(['customer', 'createdBy'])
+                                ->with(['customer:id,name', 'createdBy:id,name'])
                                 ->when($data['tableFilters']['status'] ?? null, function ($query, $status) {
                                     if ($status === 'outstanding') {
                                         return $query->whereIn('status', [\App\Enums\InvoiceStatus::Unpaid, \App\Enums\InvoiceStatus::Partial]);
@@ -509,7 +512,7 @@ class InvoicesTable
                             $invoiceIds = $records->map(fn ($record) => $record['id'])->toArray();
 
                             $invoices = \App\Models\Invoice::whereIn('id', $invoiceIds)
-                                ->with(['customer', 'createdBy'])
+                                ->with(['customer:id,name', 'createdBy:id,name'])
                                 ->orderBy('date', 'desc')
                                 ->get();
 
@@ -569,7 +572,7 @@ class InvoicesTable
                             $invoiceIds = $records->map(fn ($record) => $record['id'])->toArray();
 
                             $invoices = \App\Models\Invoice::whereIn('id', $invoiceIds)
-                                ->with(['customer', 'createdBy'])
+                                ->with(['customer:id,name', 'createdBy:id,name'])
                                 ->orderBy('date', 'desc')
                                 ->get();
 
@@ -632,7 +635,7 @@ class InvoicesTable
                             $invoiceIds = $records->map(fn ($record) => $record['id'])->toArray();
 
                             $invoices = \App\Models\Invoice::whereIn('id', $invoiceIds)
-                                ->with(['customer', 'createdBy'])
+                                ->with(['customer:id,name', 'createdBy:id,name'])
                                 ->orderBy('date', 'desc')
                                 ->get();
 

@@ -27,6 +27,13 @@ class CustomersTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(function ($query) {
+                return $query
+                    ->with(['createdBy'])
+                    ->withCount('invoices')
+                    ->withSum('invoices', 'total')
+                    ->withSum('invoices', 'due');
+            })
             ->columns([
                 TextColumn::make('code')
                     ->label('Customer Code')
@@ -62,13 +69,11 @@ class CustomersTable
 
                 TextColumn::make('invoices_count')
                     ->label('Invoices')
-                    ->counts('invoices')
                     ->alignment('right')
                     ->sortable(),
 
                 TextColumn::make('invoices_sum_total')
                     ->label('Total Invoice')
-                    ->sum('invoices', 'total')
                     ->formatStateUsing(fn ($state) => Setting::formatMoney((int) round($state / 100)))
                     ->sortable()
                     ->alignment('right')
@@ -81,7 +86,6 @@ class CustomersTable
 
                 TextColumn::make('invoices_sum_due')
                     ->label('Total Due')
-                    ->sum('invoices', 'due')
                     ->formatStateUsing(fn ($state) => Setting::formatMoney((int) round($state / 100)))
                     ->sortable()
                     ->alignment('right')
@@ -127,9 +131,16 @@ class CustomersTable
             ->filters([
                 SelectFilter::make('name')
                     ->label('Customer Name')
-                    ->options(fn () => \App\Models\Customer::pluck('name', 'id'))
                     ->searchable()
-                    ->preload()
+                    ->preload(false)  // Don't preload all customers
+                    ->getSearchResultsUsing(fn (string $search) =>
+                        \App\Models\Customer::where('name', 'like', "%{$search}%")
+                            ->limit(50)
+                            ->pluck('name', 'id')
+                    )
+                    ->getOptionLabelUsing(fn ($value) =>
+                        \App\Models\Customer::find($value)?->name
+                    )
                     ->query(fn ($query, $data) => $query->when($data['value'], fn ($query) => $query->where('id', $data['value']))),
 
                 SelectFilter::make('created_by')
@@ -172,7 +183,7 @@ class CustomersTable
                         ->action(function (array $data) {
                             // Get filtered customers
                             $customers = \App\Models\Customer::query()
-                                ->with(['invoices', 'createdBy'])
+                                ->with(['createdBy'])
                                 ->withCount('invoices')
                                 ->withSum('invoices', 'total')
                                 ->withSum('invoices', 'due')
@@ -247,7 +258,7 @@ class CustomersTable
                         ->action(function (array $data) {
                             // Get filtered customers
                             $customers = \App\Models\Customer::query()
-                                ->with(['invoices', 'createdBy'])
+                                ->with(['createdBy'])
                                 ->withCount('invoices')
                                 ->withSum('invoices', 'total')
                                 ->withSum('invoices', 'due')
@@ -325,7 +336,7 @@ class CustomersTable
                         ->action(function (array $data) {
                             // Get filtered customers
                             $customers = \App\Models\Customer::query()
-                                ->with(['invoices', 'createdBy'])
+                                ->with(['createdBy'])
                                 ->withCount('invoices')
                                 ->withSum('invoices', 'total')
                                 ->withSum('invoices', 'due')
@@ -491,7 +502,7 @@ class CustomersTable
                             $customerIds = $records->map(fn ($record) => $record['id'])->toArray();
 
                             $customers = \App\Models\Customer::whereIn('id', $customerIds)
-                                ->with(['invoices', 'createdBy'])
+                                ->with(['createdBy'])
                                 ->withCount('invoices')
                                 ->withSum('invoices', 'total')
                                 ->withSum('invoices', 'due')
@@ -556,7 +567,7 @@ class CustomersTable
                             $customerIds = $records->map(fn ($record) => $record['id'])->toArray();
 
                             $customers = \App\Models\Customer::whereIn('id', $customerIds)
-                                ->with(['invoices', 'createdBy'])
+                                ->with(['createdBy'])
                                 ->withCount('invoices')
                                 ->withSum('invoices', 'total')
                                 ->withSum('invoices', 'due')
@@ -624,7 +635,7 @@ class CustomersTable
                             $customerIds = $records->map(fn ($record) => $record['id'])->toArray();
 
                             $customers = \App\Models\Customer::whereIn('id', $customerIds)
-                                ->with(['invoices', 'createdBy'])
+                                ->with(['createdBy'])
                                 ->withCount('invoices')
                                 ->withSum('invoices', 'total')
                                 ->withSum('invoices', 'due')

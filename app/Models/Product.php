@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Casts\MoneyCast;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 class Product extends Model
 {
@@ -100,28 +101,25 @@ class Product extends Model
 
     /**
      * Generate a new unique product code based on the last product code.
+     * Uses database transaction and pessimistic locking to prevent race conditions.
      */
     public static function generateNewCode(): string
     {
-        // Get prefix from settings
         $prefix = Setting::get('product_code_prefix', 'PR-');
         $format = Setting::get('product_code_format', '%04d');
 
-        // Find the last product code with this prefix
-        $lastProduct = static::where('code', 'like', $prefix.'%')
-            ->orderBy('code', 'desc')
-            ->first();
+        return DB::transaction(function () use ($prefix, $format) {
+            // Use pessimistic locking to prevent race conditions
+            $lastProduct = static::lockForUpdate()
+                ->where('code', 'like', $prefix.'%')
+                ->orderBy('code', 'desc')
+                ->first();
 
-        if ($lastProduct) {
-            // Extract the number from the last code
-            $lastCode = $lastProduct->code;
-            $numberPart = str_replace($prefix, '', $lastCode);
-            $nextNumber = (int) $numberPart + 1;
-        } else {
-            // No products exist yet, start with 1
-            $nextNumber = 1;
-        }
+            $nextNumber = $lastProduct
+                ? ((int) str_replace($prefix, '', $lastProduct->code)) + 1
+                : 1;
 
-        return $prefix.sprintf($format, $nextNumber);
+            return $prefix.sprintf($format, $nextNumber);
+        }, 3); // Retry up to 3 times on deadlock
     }
 }

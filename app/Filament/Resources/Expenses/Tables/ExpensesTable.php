@@ -25,6 +25,9 @@ class ExpensesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(function ($query) {
+                return $query->with(['createdBy']);
+            })
             ->columns([
                 TextColumn::make('code')
                     ->label('Expense Code')

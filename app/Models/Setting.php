@@ -54,20 +54,36 @@ class Setting extends Model
             ['value' => $value]
         );
 
+        // Clear individual setting cache
         Cache::forget("setting.{$name}");
+
+        // Clear all bulk caches since we don't know which groups this setting belongs to
+        static::clearBulkCaches();
     }
 
     /**
-     * Get multiple settings at once
+     * Get multiple settings at once with bulk caching
      */
     public static function getMultiple(array $names, array $defaults = []): array
     {
-        $settings = [];
-        foreach ($names as $name) {
-            $settings[$name] = static::get($name, $defaults[$name] ?? null);
-        }
+        // Sort names to ensure consistent cache keys for same groups
+        $sortedNames = $names;
+        sort($sortedNames);
 
-        return $settings;
+        // Generate a cache key for this specific group
+        $cacheKey = 'settings.bulk.'.md5(implode(',', $sortedNames));
+
+        return Cache::remember($cacheKey, 3600, function () use ($names, $defaults) {
+            // Fetch all requested settings in a single query
+            $dbSettings = static::whereIn('name', $names)->pluck('value', 'name');
+
+            $result = [];
+            foreach ($names as $name) {
+                $result[$name] = $dbSettings[$name] ?? ($defaults[$name] ?? null);
+            }
+
+            return $result;
+        });
     }
 
     /**
@@ -292,13 +308,42 @@ class Setting extends Model
     }
 
     /**
-     * Clear all settings cache
+     * Clear bulk cache entries
+     * Since we can't easily enumerate all bulk cache keys, we use a tag-based approach
+     * or fallback to clearing specific known bulk caches
+     */
+    protected static function clearBulkCaches(): void
+    {
+        // Clear known bulk cache groups used by the helper methods
+        $knownGroups = [
+            ['company_name', 'company_address', 'company_phone', 'company_email', 'company_website', 'company_logo'],
+            ['bank_name', 'bank_account_name', 'bank_account_number', 'bank_sort_code'],
+            ['currency_symbol', 'currency_position', 'decimal_places', 'thousands_separator', 'decimal_separator'],
+            ['app_timezone', 'date_format', 'time_format', 'items_per_page', 'auto_backup_enabled', 'auto_backup_frequency'],
+            ['invoice_terms', 'invoice_footer', 'auto_round_totals', 'round_to_nearest', 'show_bank_details', 'invoice_due_days'],
+            ['customer_code_prefix', 'customer_code_format', 'product_code_prefix', 'product_code_format', 'invoice_code_prefix', 'invoice_code_format', 'expense_code_prefix', 'expense_code_format'],
+        ];
+
+        foreach ($knownGroups as $group) {
+            $sortedGroup = $group;
+            sort($sortedGroup);
+            $cacheKey = 'settings.bulk.'.md5(implode(',', $sortedGroup));
+            Cache::forget($cacheKey);
+        }
+    }
+
+    /**
+     * Clear all settings cache (individual and bulk)
      */
     public static function clearCache(): void
     {
+        // Clear individual setting caches
         $settings = static::all();
         foreach ($settings as $setting) {
             Cache::forget("setting.{$setting->name}");
         }
+
+        // Clear bulk caches
+        static::clearBulkCaches();
     }
 }

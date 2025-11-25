@@ -6,6 +6,7 @@ use App\Casts\MoneyCast;
 use App\Enums\ExpenseCategory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 class Expense extends Model
 {
@@ -110,28 +111,25 @@ class Expense extends Model
 
     /**
      * Generate a new unique expense code based on the last expense code.
+     * Uses database transaction and pessimistic locking to prevent race conditions.
      */
     public static function generateNewCode(): string
     {
-        // Get prefix from settings
         $prefix = Setting::get('expense_code_prefix', 'EX-');
         $format = Setting::get('expense_code_format', '%04d');
 
-        // Find the last expense code with this prefix
-        $lastExpense = static::where('code', 'like', $prefix.'%')
-            ->orderBy('code', 'desc')
-            ->first();
+        return DB::transaction(function () use ($prefix, $format) {
+            // Use pessimistic locking to prevent race conditions
+            $lastExpense = static::lockForUpdate()
+                ->where('code', 'like', $prefix.'%')
+                ->orderBy('code', 'desc')
+                ->first();
 
-        if ($lastExpense) {
-            // Extract the number from the last code
-            $lastCode = $lastExpense->code;
-            $numberPart = str_replace($prefix, '', $lastCode);
-            $nextNumber = (int) $numberPart + 1;
-        } else {
-            // No expenses exist yet, start with 1
-            $nextNumber = 1;
-        }
+            $nextNumber = $lastExpense
+                ? ((int) str_replace($prefix, '', $lastExpense->code)) + 1
+                : 1;
 
-        return $prefix.sprintf($format, $nextNumber);
+            return $prefix.sprintf($format, $nextNumber);
+        }, 3); // Retry up to 3 times on deadlock
     }
 }

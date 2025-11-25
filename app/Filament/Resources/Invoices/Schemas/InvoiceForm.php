@@ -22,6 +22,32 @@ use NumberFormatter;
 
 class InvoiceForm
 {
+    /**
+     * Request-level cache for Product model lookups
+     * Prevents redundant Product::find() calls during form operations
+     *
+     * @var array<int, Product|null>
+     */
+    private static array $productCache = [];
+
+    /**
+     * Get or cache a Product model instance for the current request
+     *
+     * Uses a static cache that persists for the duration of the request,
+     * reducing redundant database queries when the same product is accessed
+     * multiple times (common in invoice form with repeated calculations).
+     *
+     * @param int $productId
+     * @return Product|null
+     */
+    private static function getProductCached(int $productId): ?Product
+    {
+        if (!isset(self::$productCache[$productId])) {
+            self::$productCache[$productId] = Product::find($productId);
+        }
+        return self::$productCache[$productId];
+    }
+
     public static function getFormComponents(): array
     {
         $schema = Schema::make();
@@ -164,7 +190,7 @@ class InvoiceForm
 
                                         // Load product name from product_id
                                         if (isset($data['product_id'])) {
-                                            $productModel = Product::find($data['product_id']);
+                                            $productModel = self::getProductCached($data['product_id']);
                                             if ($productModel) {
                                                 $data['product_name'] = $productModel->name;
                                             }
@@ -621,7 +647,7 @@ class InvoiceForm
         $finalAmount = $afterDiscount;
         foreach ($products as $product) {
             if (! empty($product['product_id'])) {
-                $productModel = Product::find($product['product_id']);
+                $productModel = self::getProductCached($product['product_id']);
                 if ($productModel && $productModel->minimum_amount > 0) {
                     $lineAmount = (float) ($product['product_amount'] ?? 0);
                     if ($lineAmount < $productModel->minimum_amount) {
@@ -702,7 +728,7 @@ class InvoiceForm
 
                 // Always load product name from product_id for display
                 if (isset($product['product_id'])) {
-                    $productModel = Product::find($product['product_id']);
+                    $productModel = self::getProductCached($product['product_id']);
                     if ($productModel) {
                         $product['product_name'] = $productModel->name;
                     }

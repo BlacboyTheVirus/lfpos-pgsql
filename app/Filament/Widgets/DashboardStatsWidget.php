@@ -40,20 +40,36 @@ class DashboardStatsWidget extends BaseWidget
 
     protected function getStats(): array
     {
-        // Current period data
-        $currentInvoiceQuery = $this->getFilteredInvoiceQuery();
-        $currentTotalInvoices = $currentInvoiceQuery->sum('total') / 100;
-        $currentTotalPayments = $currentInvoiceQuery->sum('paid') / 100;
-        $currentTotalDue = $currentInvoiceQuery->sum('due') / 100;
-        $currentInvoiceCount = $currentInvoiceQuery->count();
+        // Current period data - combined query
+        $currentStats = $this->getFilteredInvoiceQuery()
+            ->selectRaw('
+                COUNT(*) as invoice_count,
+                SUM(total) as total_invoices,
+                SUM(paid) as total_payments,
+                SUM(due) as total_due
+            ')
+            ->first();
+
+        $currentTotalInvoices = ($currentStats->total_invoices ?? 0) / 100;
+        $currentTotalPayments = ($currentStats->total_payments ?? 0) / 100;
+        $currentTotalDue = ($currentStats->total_due ?? 0) / 100;
+        $currentInvoiceCount = $currentStats->invoice_count ?? 0;
         $currentExpenseTotal = $this->getExpensesForPeriod() / 100;
 
-        // Previous period data for comparison
-        $previousInvoiceQuery = $this->getPreviousPeriodInvoiceQuery();
-        $previousTotalInvoices = $previousInvoiceQuery->sum('total') / 100;
-        $previousTotalPayments = $previousInvoiceQuery->sum('paid') / 100;
-        $previousTotalDue = $previousInvoiceQuery->sum('due') / 100;
-        $previousInvoiceCount = $previousInvoiceQuery->count();
+        // Previous period data for comparison - combined query
+        $previousStats = $this->getPreviousPeriodInvoiceQuery()
+            ->selectRaw('
+                COUNT(*) as invoice_count,
+                SUM(total) as total_invoices,
+                SUM(paid) as total_payments,
+                SUM(due) as total_due
+            ')
+            ->first();
+
+        $previousTotalInvoices = ($previousStats->total_invoices ?? 0) / 100;
+        $previousTotalPayments = ($previousStats->total_payments ?? 0) / 100;
+        $previousTotalDue = ($previousStats->total_due ?? 0) / 100;
+        $previousInvoiceCount = $previousStats->invoice_count ?? 0;
         $previousExpenseTotal = $this->getExpensesForPreviousPeriod() / 100;
 
         // Calculate percentage changes

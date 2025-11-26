@@ -133,36 +133,6 @@ class ProductsTable
                             }
                         }),
 
-                    Action::make('duplicate')
-                        ->label('Duplicate')
-                        ->icon(Heroicon::OutlinedDocumentDuplicate)
-                        ->color('gray')
-                        ->form(\App\Filament\Resources\Products\Schemas\ProductForm::getFormComponents())
-                        ->fillForm(fn ($record) => [
-                            'name' => $record->name.' (Copy)',
-                            'unit' => $record->unit,
-                            'price' => $record->price,
-                            'minimum_amount' => $record->minimum_amount,
-                            'description' => $record->description,
-                            'is_active' => $record->is_active,
-                        ])
-                        ->action(function (array $data, Action $action) {
-                            try {
-                                Product::create($data);
-                            } catch (UniqueConstraintViolationException $e) {
-                                // Send error notification
-                                Notification::make()
-                                    ->title('Product already exists')
-                                    ->body('A product with this name already exists (case-insensitive match). Please use a different name.')
-                                    ->danger()
-                                    ->send();
-
-                                // Halt the action to keep the modal open
-                                $action->halt();
-                            }
-                        })
-                        ->successNotificationTitle('Product duplicated successfully'),
-
                     DeleteAction::make()
                         ->requiresConfirmation()
                         ->modalHeading('Delete Product')

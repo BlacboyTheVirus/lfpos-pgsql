@@ -418,35 +418,6 @@ class CustomersTable
                         })
                         ->hidden(fn ($record) => $record->isWalkin()),
 
-                    Action::make('duplicate')
-                        ->label('Duplicate')
-                        ->icon(Heroicon::OutlinedDocumentDuplicate)
-                        ->color('gray')
-                        ->schema(\App\Filament\Resources\Customers\Schemas\CustomerForm::getFormComponents())
-                        ->fillForm(fn ($record) => [
-                            'name' => $record->name.' (Copy)',
-                            'phone' => $record->phone,
-                            'email' => null, // Clear email to avoid duplicates
-                            'address' => $record->address,
-                        ])
-                        ->action(function (array $data, Action $action) {
-                            try {
-                                Customer::create($data);
-                            } catch (UniqueConstraintViolationException $e) {
-                                // Send error notification
-                                Notification::make()
-                                    ->title('Customer already exists')
-                                    ->body('A customer with this name already exists (case-insensitive match). Please use a different name.')
-                                    ->danger()
-                                    ->send();
-
-                                // Halt the action to keep the modal open
-                                $action->halt();
-                            }
-                        })
-                        ->successNotificationTitle('Customer duplicated successfully')
-                        ->hidden(fn ($record) => $record->isWalkin()),
-
                     DeleteAction::make()
                         ->requiresConfirmation()
                         ->modalHeading('Delete Customer')

@@ -163,23 +163,6 @@ class ExpensesTable
                         ->color('warning')
                         ->schema(\App\Filament\Resources\Expenses\Schemas\ExpenseForm::getFormComponents()),
 
-                    Action::make('duplicate')
-                        ->label('Duplicate')
-                        ->icon(Heroicon::OutlinedDocumentDuplicate)
-                        ->color('gray')
-                        ->schema(\App\Filament\Resources\Expenses\Schemas\ExpenseForm::getFormComponents())
-                        ->fillForm(fn ($record) => [
-                            'category' => $record->category,
-                            'description' => $record->description.' (Copy)',
-                            'amount' => $record->amount,
-                            'note' => $record->note,
-                            'date' => now()->toDateString(),
-                        ])
-                        ->action(function (array $data) {
-                            \App\Models\Expense::create($data);
-                        })
-                        ->successNotificationTitle('Expense duplicated successfully'),
-
                     DeleteAction::make()
                         ->requiresConfirmation()
                         ->modalHeading('Delete Expense')

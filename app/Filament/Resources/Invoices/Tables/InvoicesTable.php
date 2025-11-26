@@ -435,26 +435,6 @@ class InvoicesTable
                         ->color('warning')
                         ->form(\App\Filament\Resources\Invoices\Schemas\InvoiceForm::getFormComponents()),
 
-                    Action::make('duplicate')
-                        ->label('Duplicate')
-                        ->icon(Heroicon::OutlinedDocumentDuplicate)
-                        ->color('gray')
-                        ->form(\App\Filament\Resources\Invoices\Schemas\InvoiceForm::getFormComponents())
-                        ->fillForm(fn ($record) => [
-                            'customer_id' => $record->customer_id,
-                            'date' => now()->toDateString(),
-                            'subtotal' => $record->subtotal,
-                            'discount' => $record->discount,
-                            'round_off' => $record->round_off,
-                            'total' => $record->total,
-                            'status' => $record->status,
-                            'note' => $record->note,
-                        ])
-                        ->action(function (array $data) {
-                            \App\Models\Invoice::create($data);
-                        })
-                        ->successNotificationTitle('Invoice duplicated successfully'),
-
                     DeleteAction::make()
                         ->requiresConfirmation()
                         ->modalHeading('Delete Invoice')

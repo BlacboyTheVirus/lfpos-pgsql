@@ -5,7 +5,7 @@
 @source '../../../../vendor/defstudio/filament-searchable-input/resources/**/*.blade.php';
 
 .fi-width-7xl{
-    max-width: 88rem !important;
+    max-width: 80rem !important;
 }
 
 .text-sm {

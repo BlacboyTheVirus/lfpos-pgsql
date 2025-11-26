@@ -105,7 +105,7 @@ class ProductRevenueChart extends ChartWidget
             'responsive' => true,
             'maintainAspectRatio' => true,
             'aspectRatio' => 1.8,
-            'cutout' => '70%',
+            'cutout' => '60%',
             'plugins' => [
                 'legend' => [
                     'position' => 'right',

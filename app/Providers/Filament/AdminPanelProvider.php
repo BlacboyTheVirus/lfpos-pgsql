@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Pages\Dashboard;
 use App\Filament\Resources\Invoices\InvoiceResource;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -54,6 +55,11 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([])
+            ->plugins([
+                FilamentShieldPlugin::make()
+                    ->navigationGroup('System')
+                    ->navigationSort(70),
+            ])
             ->assets([
                 Css::make('admin-fixes', asset('css/admin-fixes.css')),
                 Js::make('app-js', asset('build/assets/app-D70hdtKS.js')),

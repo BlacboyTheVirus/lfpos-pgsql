@@ -3,12 +3,14 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Invoice;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
 class InvoiceTotalsChart extends ChartWidget
 {
+    use HasWidgetShield;
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 2;

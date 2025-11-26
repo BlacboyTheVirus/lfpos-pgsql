@@ -19,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register User Observer for super admin protection
+        \App\Models\User::observe(\App\Observers\UserObserver::class);
     }
 }

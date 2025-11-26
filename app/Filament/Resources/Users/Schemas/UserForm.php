@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users\Schemas;
 
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Hash;
@@ -22,6 +23,15 @@ class UserForm
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->maxLength(255),
+                Select::make('roles')
+                    ->label('Role')
+                    ->relationship('roles', 'name')
+                    ->options(fn () => \App\Models\Role::whereNot('name', 'super_admin')->pluck('name', 'id'))
+                    ->multiple()
+                    ->maxItems(1)
+                    ->searchable()
+                    ->preload()
+                    ->required(),
                 DateTimePicker::make('email_verified_at')
                     ->label('Email Verified At'),
                 TextInput::make('password')

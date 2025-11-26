@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Setting;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Carbon\Carbon;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class DashboardStatsWidget extends BaseWidget
 {
+    use HasWidgetShield;
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 1;

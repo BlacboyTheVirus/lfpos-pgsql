@@ -4,17 +4,20 @@ namespace App\Filament\Widgets;
 
 use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Traits\HasDateFiltering;
-use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use App\Models\Customer;
 use App\Models\Setting;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
 
 class TopCustomersWidget extends BaseWidget
 {
-    use InteractsWithPageFilters, HasDateFiltering;
+    use HasDateFiltering;
+    use HasWidgetShield;
+    use InteractsWithPageFilters;
 
     protected static ?int $sort = 4;
 

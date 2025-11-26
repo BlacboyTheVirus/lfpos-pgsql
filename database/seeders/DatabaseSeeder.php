@@ -15,10 +15,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed settings first as they may be needed by other seeders
+        // Seed in order: Settings -> RBAC (Shield) -> Users
         $this->call([
             SettingsSeeder::class,
-            SuperAdminSeeder::class,
+            ShieldSeeder::class,       // Create roles & permissions first
+            SuperAdminSeeder::class,   // Then create super admin with role
         ]);
 
         // User::factory(10)->create();

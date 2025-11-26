@@ -20,11 +20,17 @@ class UsersTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->whereDoesntHave('roles', fn ($q) => $q->where('name', 'super_admin')))
             ->columns([
                 TextColumn::make('name')
                     ->searchable(),
                 TextColumn::make('email')
                     ->label('Email address')
+                    ->searchable(),
+                TextColumn::make('roles.name')
+                    ->label('Role')
+                    ->badge()
+                    ->color('primary')
                     ->searchable(),
                 TextColumn::make('email_verified_at')
                     ->dateTime()
@@ -55,12 +61,14 @@ class UsersTable
                         ->slideOver()
                         ->modalWidth('md')
                         ->color('warning')
-                        ->schema(\App\Filament\Resources\Users\Schemas\UserForm::getFormComponents()),
+                        ->schema(\App\Filament\Resources\Users\Schemas\UserForm::getFormComponents())
+                        ->hidden(fn ($record) => $record->hasRole('super_admin')),
 
                     DeleteAction::make()
                         ->requiresConfirmation()
                         ->modalHeading('Delete User')
-                        ->modalDescription('Are you sure you want to delete this user? This action cannot be undone.'),
+                        ->modalDescription('Are you sure you want to delete this user? This action cannot be undone.')
+                        ->hidden(fn ($record) => $record->hasRole('super_admin')),
                 ]),
             ])
             ->toolbarActions([

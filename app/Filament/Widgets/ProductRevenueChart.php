@@ -5,13 +5,16 @@ namespace App\Filament\Widgets;
 use App\Filament\Traits\HasDateFiltering;
 use App\Models\InvoiceProduct;
 use App\Models\Setting;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Support\Facades\DB;
 
 class ProductRevenueChart extends ChartWidget
 {
-    use HasDateFiltering, InteractsWithPageFilters;
+    use HasDateFiltering;
+    use HasWidgetShield;
+    use InteractsWithPageFilters;
 
     protected static ?int $sort = 3;
 

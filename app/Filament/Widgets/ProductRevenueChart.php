@@ -2,13 +2,14 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Pages\Dashboard;
 use App\Filament\Traits\HasDateFiltering;
 use App\Models\InvoiceProduct;
-use App\Models\Setting;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
 
 class ProductRevenueChart extends ChartWidget
 {
@@ -32,7 +33,22 @@ class ProductRevenueChart extends ChartWidget
         return 'Product Revenue Distribution (%)';
     }
 
+    /**
+     * Cache chart data to prevent redundant queries during Livewire re-renders.
+     * Caches for 5 minutes.
+     */
+    #[Computed(persist: true, seconds: 300)]
+    public function cachedChartData(): array
+    {
+        return $this->buildChartData();
+    }
+
     protected function getData(): array
+    {
+        return $this->cachedChartData;
+    }
+
+    protected function buildChartData(): array
     {
         $dateRange = $this->getDateRangeFromFilters();
 
@@ -71,8 +87,8 @@ class ProductRevenueChart extends ChartWidget
         $totalRevenue = $products->sum('total_revenue');
 
         foreach ($products as $index => $product) {
-            // Format the amount for display (convert from cents)
-            $formattedAmount = Setting::formatMoney((int) round($product->total_revenue / 100));
+            // Format the amount for display (convert from cents) using shared cache
+            $formattedAmount = Dashboard::formatMoney((int) round($product->total_revenue / 100));
             // Append amount to product name
             $labels[] = $product->name.' ('.$formattedAmount.')';
 

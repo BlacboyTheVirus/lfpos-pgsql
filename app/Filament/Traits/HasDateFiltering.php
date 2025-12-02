@@ -3,12 +3,15 @@
 namespace App\Filament\Traits;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 
 trait HasDateFiltering
 {
     protected function getDateRangeFromFilters(): array
     {
-        $dateRange = $this->filters['date_range'] ?? 'all';
+        // Use the correct method to access page filters in Filament v4
+        $filters = method_exists($this, 'getPageFilters') ? $this->getPageFilters() : ($this->filters ?? []);
+        $dateRange = $filters['date_range'] ?? 'all';
 
         switch ($dateRange) {
             case 'today':
@@ -48,8 +51,8 @@ trait HasDateFiltering
                 ];
 
             case 'custom':
-                $dateFrom = $this->filters['date_from'] ?? null;
-                $dateTo = $this->filters['date_to'] ?? null;
+                $dateFrom = $filters['date_from'] ?? null;
+                $dateTo = $filters['date_to'] ?? null;
 
                 return [
                     'start' => $dateFrom,
@@ -63,5 +66,150 @@ trait HasDateFiltering
                     'end' => null,
                 ];
         }
+    }
+
+    /**
+     * Apply date filtering to a query builder based on current filters.
+     */
+    protected function applyDateFilter(Builder $query, string $dateColumn = 'date'): Builder
+    {
+        $filters = method_exists($this, 'getPageFilters') ? $this->getPageFilters() : ($this->filters ?? []);
+        $dateRange = $filters['date_range'] ?? 'all';
+
+        switch ($dateRange) {
+            case 'today':
+                $query->whereDate($dateColumn, Carbon::today());
+                break;
+
+            case 'last_week':
+                $query->whereBetween($dateColumn, [
+                    Carbon::now()->subWeek()->startOfDay(),
+                    Carbon::yesterday()->endOfDay(),
+                ]);
+                break;
+
+            case 'this_week':
+                $query->whereBetween($dateColumn, [
+                    Carbon::now()->startOfWeek(Carbon::SUNDAY),
+                    Carbon::now()->endOfWeek(Carbon::SATURDAY),
+                ]);
+                break;
+
+            case 'last_month':
+                $query->whereBetween($dateColumn, [
+                    Carbon::now()->subMonth()->startOfDay(),
+                    Carbon::yesterday()->endOfDay(),
+                ]);
+                break;
+
+            case 'this_month':
+                $query->whereBetween($dateColumn, [
+                    Carbon::now()->startOfMonth(),
+                    Carbon::now()->endOfMonth(),
+                ]);
+                break;
+
+            case 'this_year':
+                $query->whereBetween($dateColumn, [
+                    Carbon::now()->startOfYear(),
+                    Carbon::now()->endOfYear(),
+                ]);
+                break;
+
+            case 'custom':
+                $dateFrom = $filters['date_from'] ?? null;
+                $dateTo = $filters['date_to'] ?? null;
+
+                if ($dateFrom) {
+                    $query->whereDate($dateColumn, '>=', $dateFrom);
+                }
+
+                if ($dateTo) {
+                    $query->whereDate($dateColumn, '<=', $dateTo);
+                }
+                break;
+
+            case 'all':
+            default:
+                // No date filtering
+                break;
+        }
+
+        return $query;
+    }
+
+    /**
+     * Apply previous period date filtering to a query builder.
+     * Useful for comparison widgets that show trend data.
+     */
+    protected function applyPreviousPeriodDateFilter(Builder $query, string $dateColumn = 'date'): Builder
+    {
+        $filters = method_exists($this, 'getPageFilters') ? $this->getPageFilters() : ($this->filters ?? []);
+        $dateRange = $filters['date_range'] ?? 'all';
+
+        switch ($dateRange) {
+            case 'today':
+                $query->whereDate($dateColumn, Carbon::yesterday());
+                break;
+
+            case 'last_week':
+                $query->whereBetween($dateColumn, [
+                    Carbon::now()->subWeeks(2)->startOfDay(),
+                    Carbon::now()->subWeek()->subDay()->endOfDay(),
+                ]);
+                break;
+
+            case 'this_week':
+                $query->whereBetween($dateColumn, [
+                    Carbon::now()->subWeek()->startOfWeek(Carbon::SUNDAY),
+                    Carbon::now()->subWeek()->endOfWeek(Carbon::SATURDAY),
+                ]);
+                break;
+
+            case 'last_month':
+                $query->whereBetween($dateColumn, [
+                    Carbon::now()->subMonths(2)->startOfDay(),
+                    Carbon::now()->subMonth()->subDay()->endOfDay(),
+                ]);
+                break;
+
+            case 'this_month':
+                $query->whereBetween($dateColumn, [
+                    Carbon::now()->subMonth()->startOfMonth(),
+                    Carbon::now()->subMonth()->endOfMonth(),
+                ]);
+                break;
+
+            case 'this_year':
+                $query->whereBetween($dateColumn, [
+                    Carbon::now()->subYear()->startOfYear(),
+                    Carbon::now()->subYear()->endOfYear(),
+                ]);
+                break;
+
+            case 'custom':
+                $dateFrom = $filters['date_from'] ?? null;
+                $dateTo = $filters['date_to'] ?? null;
+
+                if ($dateFrom && $dateTo) {
+                    $diffDays = Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo));
+                    $previousStart = Carbon::parse($dateFrom)->subDays($diffDays + 1);
+                    $previousEnd = Carbon::parse($dateFrom)->subDay();
+
+                    $query->whereBetween($dateColumn, [$previousStart, $previousEnd]);
+                }
+                break;
+
+            case 'all':
+            default:
+                // For "all time", compare with previous year's data
+                $query->whereBetween($dateColumn, [
+                    Carbon::now()->subYear()->startOfYear(),
+                    Carbon::now()->subYear()->endOfYear(),
+                ]);
+                break;
+        }
+
+        return $query;
     }
 }

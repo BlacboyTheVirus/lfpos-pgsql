@@ -28,12 +28,22 @@ class EditSetting extends EditRecord
                 ->requiresConfirmation()
                 ->modalHeading('Delete Setting')
                 ->modalDescription('Are you sure you want to delete this setting? This action cannot be undone.')
-                ->visible(fn ($record) => SettingsTable::canDelete($record->name)),
+                ->visible(fn ($record) => SettingsTable::canDelete($record->name))
+                ->after(function () {
+                    // Clear settings cache after deletion
+                    \App\Models\Setting::clearCache();
+                }),
         ];
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
         return \App\Filament\Resources\Settings\Schemas\SettingForm::mutateFormDataBeforeSave($data);
+    }
+
+    protected function afterSave(): void
+    {
+        // Clear settings cache after saving
+        \App\Models\Setting::clearCache();
     }
 }

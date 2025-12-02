@@ -98,6 +98,7 @@ class CustomerTransactionsModal extends Component implements HasActions, HasForm
                     ->formatStateUsing(fn ($state) => $state->getLabel())
                     ->color(fn ($state) => $state->getColor()),
             ])
+            ->recordUrl(fn (Invoice $record) => route('filament.admin.resources.invoices.view', ['record' => $record->id]))
             ->recordActions([
                 ActionGroup::make([
                     Action::make('view')

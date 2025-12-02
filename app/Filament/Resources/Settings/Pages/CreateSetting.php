@@ -25,4 +25,10 @@ class CreateSetting extends CreateRecord
     {
         return \App\Filament\Resources\Settings\Schemas\SettingForm::mutateFormDataBeforeCreate($data);
     }
+
+    protected function afterCreate(): void
+    {
+        // Clear settings cache after creating new setting
+        \App\Models\Setting::clearCache();
+    }
 }

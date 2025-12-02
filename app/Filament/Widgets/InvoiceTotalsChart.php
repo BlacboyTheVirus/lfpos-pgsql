@@ -2,14 +2,17 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Traits\HasDateFiltering;
 use App\Models\Invoice;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Livewire\Attributes\Computed;
 
 class InvoiceTotalsChart extends ChartWidget
 {
+    use HasDateFiltering;
     use HasWidgetShield;
     use InteractsWithPageFilters;
 
@@ -26,7 +29,12 @@ class InvoiceTotalsChart extends ChartWidget
         '2xl' => 2,
     ];
 
-    protected function getData(): array
+    /**
+     * Cache chart data to prevent redundant queries during Livewire re-renders.
+     * Caches for 5 minutes.
+     */
+    #[Computed(persist: true, seconds: 300)]
+    public function cachedChartData(): array
     {
         $dateRange = $this->getDateRangeFromFilters();
 
@@ -37,46 +45,9 @@ class InvoiceTotalsChart extends ChartWidget
         return $this->getDateRangeChartData($dateRange['start'], $dateRange['end']);
     }
 
-    protected function getDateRangeFromFilters(): array
+    protected function getData(): array
     {
-        $dateRange = $this->filters['date_range'] ?? 'all';
-        $start = null;
-        $end = now()->endOfDay();
-
-        switch ($dateRange) {
-            case 'today':
-                $start = now()->startOfDay();
-                break;
-            case 'last_week':
-                $start = now()->subWeek()->startOfDay();
-                $end = now()->subDay()->endOfDay();
-                break;
-            case 'this_week':
-                $start = now()->startOfWeek(Carbon::SUNDAY)->startOfDay();
-                $end = now()->endOfWeek(Carbon::SATURDAY)->endOfDay();
-                break;
-            case 'last_month':
-                $start = now()->subMonth()->startOfDay();
-                $end = now()->subDay()->endOfDay();
-                break;
-            case 'this_month':
-                $start = now()->startOfMonth()->startOfDay();
-                $end = now()->endOfMonth()->endOfDay();
-                break;
-            case 'this_year':
-                $start = now()->startOfYear()->startOfDay();
-                $end = now()->endOfYear()->endOfDay();
-                break;
-            case 'custom':
-                $start = $this->filters['date_from'] ? Carbon::parse($this->filters['date_from'])->startOfDay() : null;
-                $end = $this->filters['date_to'] ? Carbon::parse($this->filters['date_to'])->endOfDay() : now()->endOfDay();
-                break;
-            case 'all':
-            default:
-                return ['start' => null, 'end' => null];
-        }
-
-        return ['start' => $start?->toDateString(), 'end' => $end->toDateString()];
+        return $this->cachedChartData;
     }
 
     protected function getType(): string
@@ -95,10 +66,12 @@ class InvoiceTotalsChart extends ChartWidget
             $startOfMonth = $date->copy()->startOfMonth()->toDateString();
             $endOfMonth = $date->copy()->endOfMonth()->toDateString();
 
-            $invoices = Invoice::whereBetween('date', [$startOfMonth, $endOfMonth])->get();
+            $stats = Invoice::whereBetween('date', [$startOfMonth, $endOfMonth])
+                ->selectRaw('COALESCE(SUM(total), 0) as total_amount, COALESCE(SUM(paid), 0) as paid_amount')
+                ->first();
 
-            $totalAmount = $invoices->sum('total') ;
-            $paidAmount = $invoices->sum('paid') ;
+            $totalAmount = $stats->total_amount ?? 0;
+            $paidAmount = $stats->paid_amount ?? 0;
             $dueAmount = $totalAmount - $paidAmount;
 
             $labels[] = $date->format('M Y');
@@ -150,10 +123,13 @@ class InvoiceTotalsChart extends ChartWidget
 
         while ($current->lte($end)) {
             $dateString = $current->toDateString();
-            $invoices = Invoice::whereDate('date', $dateString)->get();
 
-            $totalAmount = $invoices->sum('total') ;
-            $paidAmount = $invoices->sum('paid') ;
+            $stats = Invoice::whereDate('date', $dateString)
+                ->selectRaw('COALESCE(SUM(total), 0) as total_amount, COALESCE(SUM(paid), 0) as paid_amount')
+                ->first();
+
+            $totalAmount = $stats->total_amount ?? 0;
+            $paidAmount = $stats->paid_amount ?? 0;
             $dueAmount = $totalAmount - $paidAmount;
 
             $labels[] = $current->format('M j');
@@ -194,10 +170,13 @@ class InvoiceTotalsChart extends ChartWidget
         while ($current->lte($end)) {
             $monthStart = $current->toDateString();
             $monthEnd = $current->copy()->endOfMonth()->toDateString();
-            $invoices = Invoice::whereBetween('date', [$monthStart, $monthEnd])->get();
 
-            $totalAmount = $invoices->sum('total') ;
-            $paidAmount = $invoices->sum('paid') ;
+            $stats = Invoice::whereBetween('date', [$monthStart, $monthEnd])
+                ->selectRaw('COALESCE(SUM(total), 0) as total_amount, COALESCE(SUM(paid), 0) as paid_amount')
+                ->first();
+
+            $totalAmount = $stats->total_amount ?? 0;
+            $paidAmount = $stats->paid_amount ?? 0;
             $dueAmount = $totalAmount - $paidAmount;
 
             $labels[] = $current->format('M Y');

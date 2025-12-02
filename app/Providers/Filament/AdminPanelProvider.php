@@ -36,7 +36,7 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->sidebarCollapsibleOnDesktop()
             ->colors([
-                'primary' => Color::Teal,
+                'primary' => "#16a34a",
             ])
             ->brandName(('LfPOS'))
             ->brandLogo(asset('logo.png'))
@@ -81,12 +81,16 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
                 fn (): string => Blade::render('
-                    <a href="{{ route(\'filament.admin.resources.invoices.create\') }}"
-                       data-shortcut="i"
-                       class="universal-create fi-btn relative grid-flow-col items-center justify-center font-semibold outline-none transition duration-75 focus-visible:ring-2 rounded-lg fi-color-primary fi-btn-color-primary fi-size-md fi-btn-size-md gap-1.5 px-3 py-2 text-sm inline-grid shadow-sm bg-primary-600 text-white hover:bg-primary-500 focus-visible:ring-primary-500/50 dark:bg-primary-500 dark:hover:bg-primary-400 dark:focus-visible:ring-primary-400/50 fi-ac-action fi-ac-btn-action me-4">
-                        <x-heroicon-o-document-text class="fi-btn-icon transition duration-75 h-4 w-4" />
-                        <span class="fi-btn-label">Create Invoice</span>
-                    </a>
+                    <x-filament::button
+                        href="{{ route(\'filament.admin.resources.invoices.create\') }}"
+                        icon="heroicon-o-document-text"
+                        color="primary"
+                        tag="a"
+                        data-shortcut="i"
+                        class="universal-create me-4"
+                    >
+                        Create Invoice
+                    </x-filament::button>
                     <button
                         onclick="Livewire.dispatch(\'open-global-search\')"
                         class="fi-btn relative grid-flow-col items-center justify-center font-semibold outline-none transition duration-75 focus-visible:ring-2 rounded-lg fi-color-gray fi-btn-color-gray fi-size-md fi-btn-size-md gap-1.5 px-3 py-2 text-sm inline-grid shadow-sm bg-white text-gray-950 hover:bg-gray-50 focus-visible:ring-primary-500/50 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 dark:focus-visible:ring-primary-400/50 fi-ac-action fi-ac-btn-action me-4 border border-gray-300 dark:border-gray-600">

@@ -140,10 +140,17 @@ class SettingsTable
                         ->modalWidth('md')
                         ->color('warning')
                         ->form(\App\Filament\Resources\Settings\Schemas\SettingForm::getFormComponents())
-                        ->mutateFormDataUsing(fn ($record) => $record->toArray())
-                        ->action(function (array $data, $record) {
-                            $processedData = \App\Filament\Resources\Settings\Schemas\SettingForm::mutateFormDataBeforeSave($data);
-                            $record->update($processedData);
+                        ->fillForm(fn ($record) => $record->toArray())
+                        ->mutateFormDataUsing(function (array $data) {
+                            return \App\Filament\Resources\Settings\Schemas\SettingForm::mutateFormDataBeforeSave($data);
+                        })
+                        ->using(function ($record, array $data) {
+                            $record->update($data);
+                            return $record;
+                        })
+                        ->after(function () {
+                            // Ensure cache is cleared after save
+                            \App\Models\Setting::clearCache();
                         })
                         ->successNotificationTitle('Setting updated successfully'),
 
@@ -198,6 +205,8 @@ class SettingsTable
                             $records->each(function ($record) {
                                 $record->delete();
                             });
+                            // Clear all settings cache after bulk deletion
+                            \App\Models\Setting::clearCache();
                             \Filament\Notifications\Notification::make()
                                 ->title('Settings Deleted')
                                 ->body(count($records).' setting(s) have been deleted successfully.')

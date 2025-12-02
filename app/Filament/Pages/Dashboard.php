@@ -18,6 +18,43 @@ class Dashboard extends BaseDashboard
 
     protected ?string $heading = null;
 
+    // Shared currency settings cache for widgets
+    protected static ?array $currencySettingsCache = null;
+
+    /**
+     * Get cached currency settings to share across all widgets.
+     * This prevents each widget from querying the cache table independently.
+     */
+    public static function getCachedCurrencySettings(): array
+    {
+        if (static::$currencySettingsCache === null) {
+            static::$currencySettingsCache = Setting::getCurrencySettings();
+        }
+
+        return static::$currencySettingsCache;
+    }
+
+    /**
+     * Format money using cached currency settings.
+     * Widgets should use this method instead of Setting::formatMoney()
+     * to avoid repeated cache queries.
+     */
+    public static function formatMoney(int $amount): string
+    {
+        $settings = static::getCachedCurrencySettings();
+
+        $formatted = number_format(
+            $amount,
+            $settings['decimal_places'],
+            $settings['decimal_separator'],
+            $settings['thousands_separator']
+        );
+
+        return $settings['currency_position'] === 'before'
+            ? $settings['currency_symbol'] . ' ' . $formatted
+            : $formatted . ' ' . $settings['currency_symbol'];
+    }
+
     public function getWidgets(): array
     {
         return [
@@ -74,7 +111,7 @@ class Dashboard extends BaseDashboard
                             ->live(),
                     ])
                     ->visible(fn ($get) => $get('date_range') === 'custom')
-                    ->columnSpan(['lg' => 2]),
+                    ->columnSpan(['lg' => 3]),
             ]);
     }
 

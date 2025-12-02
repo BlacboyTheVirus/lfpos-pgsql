@@ -21,5 +21,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register User Observer for super admin protection
         \App\Models\User::observe(\App\Observers\UserObserver::class);
+
+        // Register Setting Observer for automatic cache clearing
+        \App\Models\Setting::observe(\App\Observers\SettingObserver::class);
     }
 }

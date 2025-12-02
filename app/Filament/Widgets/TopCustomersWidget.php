@@ -2,10 +2,10 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Pages\Dashboard;
 use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Traits\HasDateFiltering;
 use App\Models\Customer;
-use App\Models\Setting;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -31,49 +31,6 @@ class TopCustomersWidget extends BaseWidget
     ];
 
     protected static ?string $heading = 'Top Customers';
-
-    public function table(Table $table): Table
-    {
-        return $table
-            ->query($this->getTableQuery())
-            ->columns([
-                TextColumn::make('rank')
-                    ->label('Rank')
-                    ->getStateUsing(fn ($record) => $record->rank ?? '-')
-                    ->badge()
-                    ->color('primary')
-                    ->alignCenter(),
-
-                TextColumn::make('name')
-                    ->label('Customer')
-                    ->searchable()
-                    ->sortable()
-                    ->url(function ($record) {
-                        return CustomerResource::getUrl('index') . '?tableAction=view&tableActionRecord=' . $record->id;
-                    })
-                    ->openUrlInNewTab(false),
-
-                TextColumn::make('period_invoices_sum')
-                    ->label('Total Revenue')
-                    ->formatStateUsing(fn ($record) => Setting::formatMoney((int) round(($record->period_invoices_sum ?? 0) / 100)))
-                    ->sortable()
-                    ->alignment('right'),
-
-                TextColumn::make('invoices_sum_due')
-                    ->label('Amount Due')
-                    ->formatStateUsing(fn ($record) => Setting::formatMoney((int) round(($record->invoices_sum_due ?? 0) / 100)))
-                    ->sortable()
-                    ->alignment('right')
-                    ->color(fn ($record) => ($record->invoices_sum_due ?? 0) > 0 ? 'danger' : 'success'),
-            ])
-            ->heading('Top Customers by Revenue')
-            ->paginated([5, 10, 25])
-            ->defaultPaginationPageOption(5)
-            ->striped()
-            ->recordUrl(function ($record) {
-                return CustomerResource::getUrl('index') . '?tableAction=view&tableActionRecord=' . $record->id;
-            });
-    }
 
     protected function getTableQuery(): Builder
     {
@@ -113,5 +70,48 @@ class TopCustomersWidget extends BaseWidget
             ->havingRaw('SUM(invoices.total) > 0')
             ->orderByDesc('period_invoices_sum')
             ->limit(10);
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->query($this->getTableQuery())
+            ->columns([
+                TextColumn::make('rank')
+                    ->label('Rank')
+                    ->getStateUsing(fn ($record) => $record->rank ?? '-')
+                    ->badge()
+                    ->color('primary')
+                    ->alignCenter(),
+
+                TextColumn::make('name')
+                    ->label('Customer')
+                    ->searchable()
+                    ->sortable()
+                    ->url(function ($record) {
+                        return CustomerResource::getUrl('index') . '?tableAction=view&tableActionRecord=' . $record->id;
+                    })
+                    ->openUrlInNewTab(false),
+
+                TextColumn::make('period_invoices_sum')
+                    ->label('Total Revenue')
+                    ->formatStateUsing(fn ($record) => Dashboard::formatMoney((int) round(($record->period_invoices_sum ?? 0) / 100)))
+                    ->sortable()
+                    ->alignment('right'),
+
+                TextColumn::make('invoices_sum_due')
+                    ->label('Amount Due')
+                    ->formatStateUsing(fn ($record) => Dashboard::formatMoney((int) round(($record->invoices_sum_due ?? 0) / 100)))
+                    ->sortable()
+                    ->alignment('right')
+                    ->color(fn ($record) => ($record->invoices_sum_due ?? 0) > 0 ? 'danger' : 'success'),
+            ])
+            ->heading('Top Customers by Revenue')
+            ->paginated([5, 10, 25])
+            ->defaultPaginationPageOption(5)
+            ->striped()
+            ->recordUrl(function ($record) {
+                return CustomerResource::getUrl('index') . '?tableAction=view&tableActionRecord=' . $record->id;
+            });
     }
 }

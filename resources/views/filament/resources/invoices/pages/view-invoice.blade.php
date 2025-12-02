@@ -260,7 +260,7 @@
 
         .payment-details h3,
         .bank-details h3 {
-            font-size: 18px;
+            font-size: 16px;
             color: #333;
             margin-bottom: 20px;
             padding-bottom: 10px;
@@ -310,6 +310,7 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 10px;
+            font-size: 14px;
         }
 
         .bank-row:last-child {
@@ -319,6 +320,7 @@
         .bank-label {
             font-weight: 600;
             color: #666;
+            font-size: 14px;
         }
 
         .amount {
@@ -524,7 +526,7 @@
 
                         <!-- Bank Account Details -->
                         <div class="bank-details">
-                            <h3><i style="margin-right: 8px;">🏦</i> Bank Account Details</h3>
+                            <h3>Bank Account Details</h3>
                             <div class="bank-info">
                                 <div class="bank-row">
                                     <span class="bank-label">Account Name</span>

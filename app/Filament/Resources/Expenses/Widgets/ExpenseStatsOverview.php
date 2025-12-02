@@ -3,95 +3,175 @@
 namespace App\Filament\Resources\Expenses\Widgets;
 
 use App\Enums\ExpenseCategory;
+use App\Models\Expense;
 use App\Models\Setting;
 use Filament\Widgets\Concerns\InteractsWithPageTable;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Livewire\Attributes\Computed;
 
 class ExpenseStatsOverview extends StatsOverviewWidget
 {
     use InteractsWithPageTable;
 
-    protected static bool $isLazy = false;
+    protected static bool $isLazy = true;
 
-    public ?string $pollingInterval = '1s';
+    public ?string $pollingInterval = null;
 
     protected function getTablePage(): string
     {
         return \App\Filament\Resources\Expenses\Pages\ListExpenses::class;
     }
 
+    /**
+     * Cache category totals to prevent redundant queries during Livewire re-renders.
+     * Uses unfiltered query to always show totals for ALL expenses regardless of category filter.
+     * Caches for 5 minutes.
+     */
+    #[Computed(persist: true, seconds: 300)]
+    public function cachedCategoryTotals(): array
+    {
+        // Use base Expense query (unfiltered by category) to get totals for all expenses
+        $stats = Expense::query()
+            ->selectRaw("
+                SUM(amount) as total_expenses,
+                SUM(CASE WHEN category = ? THEN amount ELSE 0 END) as materials_total,
+                SUM(CASE WHEN category = ? THEN amount ELSE 0 END) as staff_total,
+                SUM(CASE WHEN category = ? THEN amount ELSE 0 END) as utilities_total
+            ", [
+                ExpenseCategory::Materials->value,
+                ExpenseCategory::Staff->value,
+                ExpenseCategory::Utilities->value,
+            ])->first();
+
+        return [
+            'materials' => ($stats->materials_total ?? 0) / 100,
+            'staff' => ($stats->staff_total ?? 0) / 100,
+            'utilities' => ($stats->utilities_total ?? 0) / 100,
+            'total' => ($stats->total_expenses ?? 0) / 100,
+        ];
+    }
+
     protected function getStats(): array
     {
-        $query = $this->getPageTableQuery();
+        $totals = $this->cachedCategoryTotals();
 
         // Get the category filter value
         $selectedCategory = $this->tableFilters['category']['value'] ?? null;
 
-        // Calculate totals for main categories
-        $materialsTotal = (clone $query)->where('category', ExpenseCategory::Materials->value)->sum('amount') / 100;
-        $staffTotal = (clone $query)->where('category', ExpenseCategory::Staff->value)->sum('amount') / 100;
-        $utilitiesTotal = (clone $query)->where('category', ExpenseCategory::Utilities->value)->sum('amount') / 100;
-        $totalExpenses = (clone $query)->sum('amount') / 100;
+        // Extract cached totals
+        $materialsTotal = $totals['materials'];
+        $staffTotal = $totals['staff'];
+        $utilitiesTotal = $totals['utilities'];
+        $totalExpenses = $totals['total'];
 
         $stats = [];
 
         // Determine first card based on category filter
-        if (in_array($selectedCategory, [ExpenseCategory::Materials->value, ExpenseCategory::Staff->value, ExpenseCategory::Utilities->value])) {
-            // Show Total Expenses as first card
-            $stats[] = Stat::make('Total Expenses', Setting::formatMoney((int) round($totalExpenses)))
-                ->chart($this->getChartData($query))
-                ->color('gray');
-        } else {
-            // Show the selected category or a different category
-            if ($selectedCategory && ! in_array($selectedCategory, [ExpenseCategory::Materials->value, ExpenseCategory::Staff->value, ExpenseCategory::Utilities->value])) {
-                // Show the selected category (Repairs & Cleaning or Miscellaneous)
-                $categoryEnum = ExpenseCategory::from($selectedCategory);
-                $categoryQuery = (clone $query)->where('category', $selectedCategory);
-                $categoryTotal = $categoryQuery->sum('amount') / 100;
+        // Only show selected category if it's NOT Materials, Staff, or Utilities
+        if ($selectedCategory &&
+            !in_array($selectedCategory, [
+                ExpenseCategory::Materials->value,
+                ExpenseCategory::Staff->value,
+                ExpenseCategory::Utilities->value
+            ])) {
+            // Show the selected category (Repairs & Cleaning or Miscellaneous)
+            $categoryEnum = ExpenseCategory::from($selectedCategory);
 
-                $stats[] = Stat::make($categoryEnum->getLabel(), Setting::formatMoney((int) round($categoryTotal)))
-                    ->chart($this->getChartData($categoryQuery))
-                    ->color($categoryEnum->getColor());
-            } else {
-                // No filter or show Total Expenses
-                $stats[] = Stat::make('Total Expenses', Setting::formatMoney((int) round($totalExpenses)))
-                    ->chart($this->getChartData($query))
-                    ->color('gray');
-            }
+            // Calculate actual total for this category from database
+            $categoryTotal = Expense::query()
+                ->where('category', $selectedCategory)
+                ->sum('amount') / 100;
+
+            $stats[] = Stat::make($categoryEnum->getLabel(), Setting::formatMoney((int) round($categoryTotal)))
+                ->chart($this->getChartData($selectedCategory))
+                ->color($categoryEnum->getColor());
+        } else {
+            // Show Total Expenses for: Materials, Staff, Utilities, or no filter
+            $stats[] = Stat::make('Total Expenses', Setting::formatMoney((int) round($totalExpenses)))
+                ->chart($this->getChartData('total'))
+                ->color('gray');
         }
 
         // Always show Materials, Staff, and Utilities as the other 3 cards
         $stats[] = Stat::make('Materials', Setting::formatMoney((int) round($materialsTotal)))
-            ->chart($this->getChartData((clone $query)->where('category', ExpenseCategory::Materials->value)))
+            ->chart($this->getChartData(ExpenseCategory::Materials->value))
             ->color('success');
 
         $stats[] = Stat::make('Staff', Setting::formatMoney((int) round($staffTotal)))
-            ->chart($this->getChartData((clone $query)->where('category', ExpenseCategory::Staff->value)))
+            ->chart($this->getChartData(ExpenseCategory::Staff->value))
             ->color('info');
 
         $stats[] = Stat::make('Utilities', Setting::formatMoney((int) round($utilitiesTotal)))
-            ->chart($this->getChartData((clone $query)->where('category', ExpenseCategory::Utilities->value)))
+            ->chart($this->getChartData(ExpenseCategory::Utilities->value))
             ->color('warning');
 
         return $stats;
     }
 
     /**
-     * Get chart data for the last 7 days
+     * Cache chart data for the last 7 days to prevent redundant queries.
+     * Caches for 5 minutes.
      */
-    protected function getChartData($query): array
+    #[Computed(persist: true, seconds: 300)]
+    public function cachedChartData(): array
     {
-        $data = [];
+        $startDate = now()->subDays(6)->toDateString();
+        $endDate = now()->toDateString();
 
-        for ($i = 6; $i >= 0; $i--) {
-            $date = now()->subDays($i)->toDateString();
-            $amount = (clone $query)
-                ->whereDate('date', $date)
-                ->sum('amount') / 100;
-            $data[] = round($amount);
+        // Get all expenses grouped by date and category in a single query
+        $results = $this->getPageTableQuery()
+            ->whereBetween('date', [$startDate, $endDate])
+            ->reorder() // Clear ORDER BY clauses before GROUP BY
+            ->selectRaw('date, category, SUM(amount) as total')
+            ->groupBy('date', 'category')
+            ->orderBy('date')
+            ->get();
+
+        // Initialize data structure for all categories and dates
+        $chartData = [
+            'total' => [],
+        ];
+
+        // Add all expense categories to the chart data structure
+        foreach (ExpenseCategory::cases() as $category) {
+            $chartData[$category->value] = [];
         }
 
-        return $data;
+        // Fill with zeros for all dates
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i)->toDateString();
+            foreach (array_keys($chartData) as $key) {
+                $chartData[$key][$date] = 0;
+            }
+        }
+
+        // Populate with actual data
+        foreach ($results as $result) {
+            $date = $result->date;
+            $category = $result->category;
+            $amount = round($result->total / 100);
+
+            if (isset($chartData[$category][$date])) {
+                $chartData[$category][$date] = $amount;
+            }
+            $chartData['total'][$date] = ($chartData['total'][$date] ?? 0) + $amount;
+        }
+
+        // Convert to indexed arrays (order matters for chart display)
+        foreach ($chartData as $key => $values) {
+            $chartData[$key] = array_values($values);
+        }
+
+        return $chartData;
+    }
+
+    /**
+     * Get chart data for a specific category or total
+     */
+    protected function getChartData(string $category = 'total'): array
+    {
+        $chartData = $this->cachedChartData();
+        return $chartData[$category] ?? $chartData['total'];
     }
 }

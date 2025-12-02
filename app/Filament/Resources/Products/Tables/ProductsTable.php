@@ -25,6 +25,22 @@ class ProductsTable
 {
     public static function configure(Table $table): Table
     {
+        // Cache currency settings once per page load to avoid repeated queries
+        $currencySettings = \App\Models\Setting::getCurrencySettings();
+        $formatMoney = function (int $amountInCents) use ($currencySettings): string {
+            $amount = $amountInCents;
+            $formatted = number_format(
+                $amount,
+                (int) $currencySettings['decimal_places'],
+                $currencySettings['decimal_separator'] ?? '.',
+                $currencySettings['thousands_separator'] ?? ','
+            );
+
+            return $currencySettings['currency_position'] === 'before'
+                ? $currencySettings['currency_symbol'].$formatted
+                : $formatted.$currencySettings['currency_symbol'];
+        };
+
         return $table
             ->columns([
                 TextColumn::make('code')
@@ -49,13 +65,13 @@ class ProductsTable
 
                 TextColumn::make('price')
                     ->label('Price')
-                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state * 1)))
                     ->sortable()
                     ->alignment('right'),
 
                 TextColumn::make('minimum_amount')
                     ->label('Minimum Amount')
-                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state * 1)))
                     ->sortable()
                     ->alignment('right')
                     ->toggleable(isToggledHiddenByDefault: true),

@@ -24,6 +24,22 @@ class ExpensesTable
 {
     public static function configure(Table $table): Table
     {
+        // Cache currency settings once per page load to avoid repeated queries
+        $currencySettings = \App\Models\Setting::getCurrencySettings();
+        $formatMoney = function (int $amountInCents) use ($currencySettings): string {
+            $amount = $amountInCents;
+            $formatted = number_format(
+                $amount,
+                (int) $currencySettings['decimal_places'],
+                $currencySettings['decimal_separator'] ?? '.',
+                $currencySettings['thousands_separator'] ?? ','
+            );
+
+            return $currencySettings['currency_position'] === 'before'
+                ? $currencySettings['currency_symbol'].$formatted
+                : $formatted.$currencySettings['currency_symbol'];
+        };
+
         return $table
             ->modifyQueryUsing(function ($query) {
                 return $query->with(['createdBy']);
@@ -52,12 +68,12 @@ class ExpensesTable
 
                 TextColumn::make('amount')
                     ->label('Amount')
-                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state)))
+                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state)))
                     ->sortable()
                     ->alignment('right')
                     ->summarize([
                         \Filament\Tables\Columns\Summarizers\Sum::make()
-                            ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state / 100))),
+                            ->formatStateUsing(fn ($state) => $formatMoney((int) round($state / 100))),
                     ]),
 
                 TextColumn::make('description')

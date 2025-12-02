@@ -26,6 +26,22 @@ class CustomersTable
 {
     public static function configure(Table $table): Table
     {
+        // Cache currency settings once per page load to avoid repeated queries
+        $currencySettings = Setting::getCurrencySettings();
+        $formatMoney = function (int $amountInCents) use ($currencySettings): string {
+            $amount = $amountInCents;
+            $formatted = number_format(
+                $amount,
+                (int) $currencySettings['decimal_places'],
+                $currencySettings['decimal_separator'] ?? '.',
+                $currencySettings['thousands_separator'] ?? ','
+            );
+
+            return $currencySettings['currency_position'] === 'before'
+                ? $currencySettings['currency_symbol'].$formatted
+                : $formatted.$currencySettings['currency_symbol'];
+        };
+
         return $table
             ->modifyQueryUsing(function ($query) {
                 return $query
@@ -74,26 +90,26 @@ class CustomersTable
 
                 TextColumn::make('invoices_sum_total')
                     ->label('Total Invoice')
-                    ->formatStateUsing(fn ($state) => Setting::formatMoney((int) round($state / 100)))
+                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state / 100)))
                     ->sortable()
                     ->alignment('right')
                     ->weight('semibold')
                     ->summarize([
                         Sum::make()
                             ->label('Total')
-                            ->formatStateUsing(fn ($state) => Setting::formatMoney((int) round($state / 100))),
+                            ->formatStateUsing(fn ($state) => $formatMoney((int) round($state / 100))),
                     ]),
 
                 TextColumn::make('invoices_sum_due')
                     ->label('Total Due')
-                    ->formatStateUsing(fn ($state) => Setting::formatMoney((int) round($state / 100)))
+                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state / 100)))
                     ->sortable()
                     ->alignment('right')
                     ->color(fn ($state) => $state > 0 ? 'danger' : '')
                     ->summarize([
                         Sum::make()
                             ->label('Total')
-                            ->formatStateUsing(fn ($state) => Setting::formatMoney((int) round($state / 100))),
+                            ->formatStateUsing(fn ($state) => $formatMoney((int) round($state / 100))),
                     ]),
 
                 TextColumn::make('createdBy.name')

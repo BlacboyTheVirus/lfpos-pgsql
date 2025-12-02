@@ -20,6 +20,23 @@ class Invoice extends Model
 
     protected $guarded = ['is_paid'];
 
+    /**
+     * Static cache for invoice code prefix to avoid repeated database queries
+     */
+    private static ?string $cachedPrefix = null;
+
+    /**
+     * Get the invoice code prefix with static caching
+     */
+    private static function getPrefix(): string
+    {
+        if (self::$cachedPrefix === null) {
+            self::$cachedPrefix = Setting::get('invoice_code_prefix', 'IN-');
+        }
+
+        return self::$cachedPrefix;
+    }
+
     protected $casts = [
         'is_paid' => 'boolean',
         'status' => InvoiceStatus::class,
@@ -78,7 +95,7 @@ class Invoice extends Model
 
     public static function generateNewCode(): string
     {
-        $prefix = Setting::get('invoice_code_prefix', 'IN-');
+        $prefix = self::getPrefix();
 
         $maxAttempts = 10;
 

@@ -37,16 +37,55 @@ class CustomerTransactionsModal extends Component implements HasActions, HasForm
     {
         $invoices = $this->customer->invoices;
 
+        // Cache currency settings to format amounts once
+        $currencySettings = Setting::getCurrencySettings();
+        $formatMoney = function (int $amountInCents) use ($currencySettings): string {
+            $amount = $amountInCents;
+            $formatted = number_format(
+                $amount,
+                (int) $currencySettings['decimal_places'],
+                $currencySettings['decimal_separator'] ?? '.',
+                $currencySettings['thousands_separator'] ?? ','
+            );
+
+            return $currencySettings['currency_position'] === 'before'
+                ? $currencySettings['currency_symbol'].$formatted
+                : $formatted.$currencySettings['currency_symbol'];
+        };
+
+        $totalInvoices = $invoices->sum('total');
+        $totalPaid = $invoices->sum('paid');
+        $totalDue = $invoices->sum('due');
+
         $this->financialSummary = [
-            'total_invoices' => $invoices->sum('total'),
-            'total_paid' => $invoices->sum('paid'),
-            'total_due' => $invoices->sum('due'),
+            'total_invoices' => $totalInvoices,
+            'total_invoices_formatted' => $formatMoney($totalInvoices),
+            'total_paid' => $totalPaid,
+            'total_paid_formatted' => $formatMoney($totalPaid),
+            'total_due' => $totalDue,
+            'total_due_formatted' => $formatMoney($totalDue),
             'invoice_count' => $invoices->count(),
         ];
     }
 
     public function table(Table $table): Table
     {
+        // Cache currency settings once per table render to avoid repeated queries
+        $currencySettings = Setting::getCurrencySettings();
+        $formatMoney = function (int $amountInCents) use ($currencySettings): string {
+            $amount = $amountInCents;
+            $formatted = number_format(
+                $amount,
+                (int) $currencySettings['decimal_places'],
+                $currencySettings['decimal_separator'] ?? '.',
+                $currencySettings['thousands_separator'] ?? ','
+            );
+
+            return $currencySettings['currency_position'] === 'before'
+                ? $currencySettings['currency_symbol'].$formatted
+                : $formatted.$currencySettings['currency_symbol'];
+        };
+
         return $table
             ->query(
                 Invoice::query()
@@ -74,20 +113,20 @@ class CustomerTransactionsModal extends Component implements HasActions, HasForm
 
                 TextColumn::make('total')
                     ->label('Invoice Total')
-                    ->formatStateUsing(fn ($state) => Setting::formatMoney($state))
+                    ->formatStateUsing(fn ($state) => $formatMoney($state))
                     ->alignment('right')
                     ->sortable()
                     ->weight('semibold'),
 
                 TextColumn::make('paid')
                     ->label('Total Payment')
-                    ->formatStateUsing(fn ($state) => Setting::formatMoney($state))
+                    ->formatStateUsing(fn ($state) => $formatMoney($state))
                     ->alignment('right')
                     ->sortable(),
 
                 TextColumn::make('due')
                     ->label('Amount Due')
-                    ->formatStateUsing(fn ($state) => Setting::formatMoney($state))
+                    ->formatStateUsing(fn ($state) => $formatMoney($state))
                     ->alignment('right')
                     ->sortable()
                     ->color(fn ($state) => $state > 0 ? '' : ''),

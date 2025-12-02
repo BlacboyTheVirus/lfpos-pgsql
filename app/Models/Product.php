@@ -21,6 +21,23 @@ class Product extends Model
         'created_by',
     ];
 
+    /**
+     * Static cache for product code prefix to avoid repeated database queries
+     */
+    private static ?string $cachedPrefix = null;
+
+    /**
+     * Get the product code prefix with static caching
+     */
+    private static function getPrefix(): string
+    {
+        if (self::$cachedPrefix === null) {
+            self::$cachedPrefix = Setting::get('product_code_prefix', 'PR-');
+        }
+
+        return self::$cachedPrefix;
+    }
+
     protected function casts(): array
     {
         return [
@@ -105,7 +122,7 @@ class Product extends Model
      */
     public static function generateNewCode(): string
     {
-        $prefix = Setting::get('product_code_prefix', 'PR-');
+        $prefix = self::getPrefix();
         $format = Setting::get('product_code_format', '%04d');
 
         return DB::transaction(function () use ($prefix, $format) {

@@ -27,21 +27,21 @@
                 <div  style="display: flex; justify-content: space-between; align-items: center; padding: .175rem 0;">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Total Invoices:</span>
                     <span class="text-sm font-semibold text-gray-900 dark:text-white">
-                        {{ \App\Models\Setting::formatMoney($financialSummary['total_invoices']) }}
+                        {{ $financialSummary['total_invoices_formatted'] }}
                     </span>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: .175rem 0;">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Amount Paid:</span>
                     <span class="text-sm font-semibold text-gray-900 dark:text-white">
-                        {{ \App\Models\Setting::formatMoney($financialSummary['total_paid']) }}
+                        {{ $financialSummary['total_paid_formatted'] }}
                     </span>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: .175rem 0;">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Amount Due:</span>
                     <span class="text-sm font-semibold text-gray-900 dark:text-white">
-                        {{ \App\Models\Setting::formatMoney($financialSummary['total_due']) }}
+                        {{ $financialSummary['total_due_formatted'] }}
                     </span>
                 </div>
 

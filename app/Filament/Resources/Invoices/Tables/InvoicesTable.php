@@ -27,6 +27,22 @@ class InvoicesTable
 {
     public static function configure(Table $table): Table
     {
+        // Cache currency settings once per page load to avoid repeated queries
+        $currencySettings = \App\Models\Setting::getCurrencySettings();
+        $formatMoney = function (int $amountInCents) use ($currencySettings): string {
+            $amount = $amountInCents;
+            $formatted = number_format(
+                $amount,
+                (int) $currencySettings['decimal_places'],
+                $currencySettings['decimal_separator'] ?? '.',
+                $currencySettings['thousands_separator'] ?? ','
+            );
+
+            return $currencySettings['currency_position'] === 'before'
+                ? $currencySettings['currency_symbol'].$formatted
+                : $formatted.$currencySettings['currency_symbol'];
+        };
+
         return $table
             ->modifyQueryUsing(function ($query) {
                 return $query->with(['customer', 'createdBy']);
@@ -53,37 +69,37 @@ class InvoicesTable
 
                 TextColumn::make('total')
                     ->label('Total')
-                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state * 1)))
                     ->sortable()
                     ->alignment('right')
                     ->weight('semibold')
                     ->summarize([
                         Sum::make()
                             ->label('Total Invoices')
-                            ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state / 100))),
+                            ->formatStateUsing(fn ($state) => $formatMoney((int) round($state / 100))),
                     ]),
 
                 TextColumn::make('paid')
                     ->label('Paid')
-                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state * 1)))
                     ->sortable()
                     ->alignment('right')
                     ->summarize([
                         Sum::make()
                             ->label('Total Payments')
-                            ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state / 100))),
+                            ->formatStateUsing(fn ($state) => $formatMoney((int) round($state / 100))),
                     ]),
 
                 TextColumn::make('due')
                     ->label('Due')
-                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state * 1)))
                     ->sortable()
                     ->alignment('right')
                     ->color(fn ($state) => $state > 0 ? 'danger' : 'success')
                     ->summarize([
                         Sum::make()
                             ->label('Total Due')
-                            ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state / 100))),
+                            ->formatStateUsing(fn ($state) => $formatMoney((int) round($state / 100))),
                     ]),
 
                 TextColumn::make('status')

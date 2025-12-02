@@ -20,11 +20,28 @@ class Customer extends Model
     ];
 
     /**
+     * Static cache for customer code prefix to avoid repeated database queries
+     */
+    private static ?string $cachedPrefix = null;
+
+    /**
+     * Get the customer code prefix with static caching
+     */
+    private static function getPrefix(): string
+    {
+        if (self::$cachedPrefix === null) {
+            self::$cachedPrefix = Setting::get('customer_code_prefix', 'CU-');
+        }
+
+        return self::$cachedPrefix;
+    }
+
+    /**
      * Scope to get the walk-in customer (CU-0001)
      */
     public function scopeWalkin($query)
     {
-        $prefix = Setting::get('customer_code_prefix', 'CU-');
+        $prefix = self::getPrefix();
 
         return $query->where('code', $prefix.'0001');
     }
@@ -34,7 +51,7 @@ class Customer extends Model
      */
     public function isWalkin(): bool
     {
-        $prefix = Setting::get('customer_code_prefix', 'CU-');
+        $prefix = self::getPrefix();
 
         return $this->code === $prefix.'0001';
     }
@@ -111,7 +128,7 @@ class Customer extends Model
      */
     public static function generateNewCode(): string
     {
-        $prefix = Setting::get('customer_code_prefix', 'CU-');
+        $prefix = self::getPrefix();
         $format = Setting::get('customer_code_format', '%04d');
 
         return DB::transaction(function () use ($prefix, $format) {
@@ -134,7 +151,7 @@ class Customer extends Model
      */
     public static function getWalkinCustomer(): self
     {
-        $prefix = Setting::get('customer_code_prefix', 'CU-');
+        $prefix = self::getPrefix();
         $walkinCode = $prefix.'0001';
 
         return Cache::remember('customer.walkin', 3600, function () use ($walkinCode) {

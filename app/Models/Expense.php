@@ -20,6 +20,23 @@ class Expense extends Model
         'created_by',
     ];
 
+    /**
+     * Static cache for expense code prefix to avoid repeated database queries
+     */
+    private static ?string $cachedPrefix = null;
+
+    /**
+     * Get the expense code prefix with static caching
+     */
+    private static function getPrefix(): string
+    {
+        if (self::$cachedPrefix === null) {
+            self::$cachedPrefix = Setting::get('expense_code_prefix', 'EX-');
+        }
+
+        return self::$cachedPrefix;
+    }
+
     protected function casts(): array
     {
         return [
@@ -115,7 +132,7 @@ class Expense extends Model
      */
     public static function generateNewCode(): string
     {
-        $prefix = Setting::get('expense_code_prefix', 'EX-');
+        $prefix = self::getPrefix();
         $format = Setting::get('expense_code_format', '%04d');
 
         return DB::transaction(function () use ($prefix, $format) {

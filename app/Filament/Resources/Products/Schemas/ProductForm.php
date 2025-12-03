@@ -14,6 +14,9 @@ class ProductForm
 {
     public static function configure(Schema $schema): Schema
     {
+        // Cache currency symbol once to avoid repeated queries
+        $currencySymbol = \App\Models\Setting::get('currency_symbol', '₦');
+
         return $schema
             ->components([
                 Section::make('Product Information')
@@ -71,7 +74,7 @@ class ProductForm
                                     ->minValue(0)
                                     ->step(0.01)
                                     ->placeholder('0.00')
-                                    ->prefix(\App\Models\Setting::get('currency_symbol', '₦')),
+                                    ->prefix($currencySymbol),
 
                                 TextInput::make('minimum_amount')
                                     ->label('Minimum Amount')
@@ -81,7 +84,7 @@ class ProductForm
                                     ->step(0.01)
                                     ->default(0)
                                     ->placeholder('0.00')
-                                    ->prefix(\App\Models\Setting::get('currency_symbol', '₦')),
+                                    ->prefix($currencySymbol),
                             ]),
 
                         Textarea::make('description')

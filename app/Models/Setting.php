@@ -18,6 +18,17 @@ class Setting extends Model
         'is_encrypted',
     ];
 
+    /**
+     * In-memory cache for settings within a single request
+     * This prevents multiple cache storage queries for the same settings
+     */
+    protected static array $requestCache = [];
+
+    /**
+     * In-memory cache for bulk settings within a single request
+     */
+    protected static array $bulkRequestCache = [];
+
     public function getValueAttribute($value)
     {
         // Try to decode JSON, return original value if not JSON
@@ -36,12 +47,24 @@ class Setting extends Model
 
     /**
      * Get a setting value by name with caching
+     * Uses in-memory request cache to avoid repeated cache storage queries
      */
     public static function get(string $name, $default = null)
     {
-        return Cache::remember("setting.{$name}", 3600, function () use ($name, $default) {
+        // Check in-memory request cache first
+        if (array_key_exists($name, static::$requestCache)) {
+            return static::$requestCache[$name];
+        }
+
+        // Fetch from Laravel cache (and database if not cached)
+        $value = Cache::remember("setting.{$name}", 3600, function () use ($name, $default) {
             return static::where('name', $name)->value('value') ?? $default;
         });
+
+        // Store in request cache
+        static::$requestCache[$name] = $value;
+
+        return $value;
     }
 
     /**
@@ -57,12 +80,19 @@ class Setting extends Model
         // Clear individual setting cache
         Cache::forget("setting.{$name}");
 
+        // Clear in-memory request cache
+        unset(static::$requestCache[$name]);
+
         // Clear all bulk caches since we don't know which groups this setting belongs to
         static::clearBulkCaches();
+
+        // Clear bulk request cache
+        static::$bulkRequestCache = [];
     }
 
     /**
      * Get multiple settings at once with bulk caching
+     * Uses in-memory request cache to avoid repeated cache storage queries
      */
     public static function getMultiple(array $names, array $defaults = []): array
     {
@@ -73,7 +103,13 @@ class Setting extends Model
         // Generate a cache key for this specific group
         $cacheKey = 'settings.bulk.'.md5(implode(',', $sortedNames));
 
-        return Cache::remember($cacheKey, 3600, function () use ($names, $defaults) {
+        // Check in-memory request cache first
+        if (array_key_exists($cacheKey, static::$bulkRequestCache)) {
+            return static::$bulkRequestCache[$cacheKey];
+        }
+
+        // Fetch from Laravel cache (and database if not cached)
+        $result = Cache::remember($cacheKey, 3600, function () use ($names, $defaults) {
             // Fetch all requested settings in a single query
             $dbSettings = static::whereIn('name', $names)->pluck('value', 'name');
 
@@ -84,6 +120,11 @@ class Setting extends Model
 
             return $result;
         });
+
+        // Store in request cache
+        static::$bulkRequestCache[$cacheKey] = $result;
+
+        return $result;
     }
 
     /**
@@ -345,5 +386,17 @@ class Setting extends Model
 
         // Clear bulk caches
         static::clearBulkCaches();
+
+        // Clear in-memory request caches
+        static::$requestCache = [];
+        static::$bulkRequestCache = [];
+    }
+
+    /**
+     * Alias for getMultiple() - provides compatibility with ViewInvoice and InvoicePrintController
+     */
+    public static function multiGet(array $names, array $defaults = []): array
+    {
+        return static::getMultiple($names, $defaults);
     }
 }

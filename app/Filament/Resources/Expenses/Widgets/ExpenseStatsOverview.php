@@ -56,6 +56,25 @@ class ExpenseStatsOverview extends StatsOverviewWidget
     {
         $totals = $this->cachedCategoryTotals();
 
+        // Cache chart data once to avoid repeated queries
+        $chartData = $this->cachedChartData();
+
+        // Cache currency settings once to avoid repeated queries
+        $currencySettings = Setting::getCurrencySettings();
+        $formatMoney = function (int $amountInCents) use ($currencySettings): string {
+            $amount = $amountInCents;
+            $formatted = number_format(
+                $amount,
+                (int) $currencySettings['decimal_places'],
+                $currencySettings['decimal_separator'] ?? '.',
+                $currencySettings['thousands_separator'] ?? ','
+            );
+
+            return $currencySettings['currency_position'] === 'before'
+                ? $currencySettings['currency_symbol'].$formatted
+                : $formatted.$currencySettings['currency_symbol'];
+        };
+
         // Get the category filter value
         $selectedCategory = $this->tableFilters['category']['value'] ?? null;
 
@@ -83,27 +102,27 @@ class ExpenseStatsOverview extends StatsOverviewWidget
                 ->where('category', $selectedCategory)
                 ->sum('amount') / 100;
 
-            $stats[] = Stat::make($categoryEnum->getLabel(), Setting::formatMoney((int) round($categoryTotal)))
-                ->chart($this->getChartData($selectedCategory))
+            $stats[] = Stat::make($categoryEnum->getLabel(), $formatMoney((int) round($categoryTotal)))
+                ->chart($chartData[$selectedCategory] ?? $chartData['total'])
                 ->color($categoryEnum->getColor());
         } else {
             // Show Total Expenses for: Materials, Staff, Utilities, or no filter
-            $stats[] = Stat::make('Total Expenses', Setting::formatMoney((int) round($totalExpenses)))
-                ->chart($this->getChartData('total'))
+            $stats[] = Stat::make('Total Expenses', $formatMoney((int) round($totalExpenses)))
+                ->chart($chartData['total'])
                 ->color('gray');
         }
 
         // Always show Materials, Staff, and Utilities as the other 3 cards
-        $stats[] = Stat::make('Materials', Setting::formatMoney((int) round($materialsTotal)))
-            ->chart($this->getChartData(ExpenseCategory::Materials->value))
+        $stats[] = Stat::make('Materials', $formatMoney((int) round($materialsTotal)))
+            ->chart($chartData[ExpenseCategory::Materials->value])
             ->color('success');
 
-        $stats[] = Stat::make('Staff', Setting::formatMoney((int) round($staffTotal)))
-            ->chart($this->getChartData(ExpenseCategory::Staff->value))
+        $stats[] = Stat::make('Staff', $formatMoney((int) round($staffTotal)))
+            ->chart($chartData[ExpenseCategory::Staff->value])
             ->color('info');
 
-        $stats[] = Stat::make('Utilities', Setting::formatMoney((int) round($utilitiesTotal)))
-            ->chart($this->getChartData(ExpenseCategory::Utilities->value))
+        $stats[] = Stat::make('Utilities', $formatMoney((int) round($utilitiesTotal)))
+            ->chart($chartData[ExpenseCategory::Utilities->value])
             ->color('warning');
 
         return $stats;
@@ -164,14 +183,5 @@ class ExpenseStatsOverview extends StatsOverviewWidget
         }
 
         return $chartData;
-    }
-
-    /**
-     * Get chart data for a specific category or total
-     */
-    protected function getChartData(string $category = 'total'): array
-    {
-        $chartData = $this->cachedChartData();
-        return $chartData[$category] ?? $chartData['total'];
     }
 }

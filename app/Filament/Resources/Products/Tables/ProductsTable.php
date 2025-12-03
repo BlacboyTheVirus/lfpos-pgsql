@@ -42,6 +42,9 @@ class ProductsTable
         };
 
         return $table
+            ->modifyQueryUsing(function ($query) {
+                return $query->with(['createdBy']);
+            })
             ->columns([
                 TextColumn::make('code')
                     ->label('Code')

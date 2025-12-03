@@ -11,11 +11,19 @@ class InvoicePrintController extends Controller
     {
         $invoice->load(['customer', 'products.product', 'payments']);
 
+        // Use multiGet for batch retrieval to avoid 4 separate cache queries
+        $settingsData = Setting::multiGet([
+            'company_name',
+            'bank_account_name',
+            'bank_account_number',
+            'bank_name',
+        ]);
+
         $settings = [
-            'company_name' => Setting::get('company_name'),
-            'bank_account_name' => Setting::get('bank_account_name'),
-            'bank_account_number' => Setting::get('bank_account_number'),
-            'bank_name' => Setting::get('bank_name'),
+            'company_name' => $settingsData['company_name'],
+            'bank_account_name' => $settingsData['bank_account_name'],
+            'bank_account_number' => $settingsData['bank_account_number'],
+            'bank_name' => $settingsData['bank_name'],
         ];
 
         return view('invoices.print', compact('invoice', 'settings'));

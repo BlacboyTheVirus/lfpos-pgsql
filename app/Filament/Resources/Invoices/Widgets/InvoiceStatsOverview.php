@@ -22,6 +22,22 @@ class InvoiceStatsOverview extends StatsOverviewWidget
 
     protected function getStats(): array
     {
+        // Cache currency settings once to avoid repeated queries
+        $currencySettings = Setting::getCurrencySettings();
+        $formatMoney = function (int $amountInCents) use ($currencySettings): string {
+            $amount = $amountInCents;
+            $formatted = number_format(
+                $amount,
+                (int) $currencySettings['decimal_places'],
+                $currencySettings['decimal_separator'] ?? '.',
+                $currencySettings['thousands_separator'] ?? ','
+            );
+
+            return $currencySettings['currency_position'] === 'before'
+                ? $currencySettings['currency_symbol'].$formatted
+                : $formatted.$currencySettings['currency_symbol'];
+        };
+
         // Build query with filters using the page table query
         $query = $this->getPageTableQuery();
 
@@ -32,19 +48,19 @@ class InvoiceStatsOverview extends StatsOverviewWidget
         $invoiceCount = (clone $query)->count();
 
         return [
-            Stat::make('Invoices', Setting::formatMoney((int) round($totalInvoices)))
+            Stat::make('Invoices', $formatMoney((int) round($totalInvoices)))
                 ->description('Total invoice amount')
                 ->descriptionIcon('heroicon-o-document-text')
                 ->color('success')
                 ->chart([7, 12, 15, 18, 22, 28, 35]),
 
-            Stat::make('Payment', Setting::formatMoney((int) round($totalPayments)))
+            Stat::make('Payment', $formatMoney((int) round($totalPayments)))
                 ->description('Total payments received')
                 ->descriptionIcon('heroicon-o-banknotes')
                 ->color('success')
                 ->chart([5, 10, 12, 15, 20, 25, 30]),
 
-            Stat::make('Payment Due', Setting::formatMoney((int) round($totalDue)))
+            Stat::make('Payment Due', $formatMoney((int) round($totalDue)))
                 ->description('Outstanding amount')
                 ->descriptionIcon('heroicon-o-exclamation-circle')
                 ->color('danger')

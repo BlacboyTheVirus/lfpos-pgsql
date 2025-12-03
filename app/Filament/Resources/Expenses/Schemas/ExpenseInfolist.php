@@ -11,6 +11,22 @@ class ExpenseInfolist
 {
     public static function configure(Schema $schema): Schema
     {
+        // Cache currency settings once to avoid repeated queries
+        $currencySettings = \App\Models\Setting::getCurrencySettings();
+        $formatMoney = function (int $amountInCents) use ($currencySettings): string {
+            $amount = $amountInCents;
+            $formatted = number_format(
+                $amount,
+                (int) $currencySettings['decimal_places'],
+                $currencySettings['decimal_separator'] ?? '.',
+                $currencySettings['thousands_separator'] ?? ','
+            );
+
+            return $currencySettings['currency_position'] === 'before'
+                ? $currencySettings['currency_symbol'].$formatted
+                : $formatted.$currencySettings['currency_symbol'];
+        };
+
         return $schema
             ->components([
                 Section::make('Expense Information')
@@ -40,10 +56,10 @@ class ExpenseInfolist
                                     ->label('Category')
                                     ->badge()
                                     ->color(fn ($state) => $state?->getColor() ?? 'gray'),
-                                
+
                                 TextEntry::make('amount')
                                     ->label('Amount')
-                                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state * 1)))
                                     ->weight('semibold')
                                     ->size('lg')
                                     ->color('success')

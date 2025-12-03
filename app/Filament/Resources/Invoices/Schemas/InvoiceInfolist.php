@@ -13,6 +13,22 @@ class InvoiceInfolist
 {
     public static function configure(Schema $schema): Schema
     {
+        // Cache currency settings once to avoid repeated queries
+        $currencySettings = \App\Models\Setting::getCurrencySettings();
+        $formatMoney = function (int $amountInCents) use ($currencySettings): string {
+            $amount = $amountInCents;
+            $formatted = number_format(
+                $amount,
+                (int) $currencySettings['decimal_places'],
+                $currencySettings['decimal_separator'] ?? '.',
+                $currencySettings['thousands_separator'] ?? ','
+            );
+
+            return $currencySettings['currency_position'] === 'before'
+                ? $currencySettings['currency_symbol'].$formatted
+                : $formatted.$currencySettings['currency_symbol'];
+        };
+
         return $schema
             ->components([
                 Section::make('Invoice Information')
@@ -68,19 +84,19 @@ class InvoiceInfolist
                             ->schema([
                                 TextEntry::make('subtotal')
                                     ->label('Subtotal')
-                                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state * 1)))
                                     ->weight('medium')
                                     ->alignment('right'),
 
                                 TextEntry::make('discount')
                                     ->label('Discount')
-                                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state * 1)))
                                     ->color('warning')
                                     ->alignment('right'),
 
                                 TextEntry::make('round_off')
                                     ->label('Round Off')
-                                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state * 1)))
                                     ->color('info')
                                     ->alignment('right'),
                             ]),
@@ -89,7 +105,7 @@ class InvoiceInfolist
                             ->schema([
                                 TextEntry::make('total')
                                     ->label('Total Amount')
-                                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state * 1)))
                                     ->weight('bold')
                                     ->size('lg')
                                     ->color('success')
@@ -97,14 +113,14 @@ class InvoiceInfolist
 
                                 TextEntry::make('paid')
                                     ->label('Paid Amount')
-                                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state * 1)))
                                     ->weight('medium')
                                     ->color('success')
                                     ->alignment('right'),
 
                                 TextEntry::make('due')
                                     ->label('Due Amount')
-                                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state * 1)))
                                     ->weight('medium')
                                     ->color(fn ($state) => $state > 0 ? 'danger' : 'success')
                                     ->alignment('right'),

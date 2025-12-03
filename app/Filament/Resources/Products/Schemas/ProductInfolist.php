@@ -13,6 +13,22 @@ class ProductInfolist
 {
     public static function configure(Schema $schema): Schema
     {
+        // Cache currency settings once to avoid repeated queries
+        $currencySettings = \App\Models\Setting::getCurrencySettings();
+        $formatMoney = function (int $amountInCents) use ($currencySettings): string {
+            $amount = $amountInCents;
+            $formatted = number_format(
+                $amount,
+                (int) $currencySettings['decimal_places'],
+                $currencySettings['decimal_separator'] ?? '.',
+                $currencySettings['thousands_separator'] ?? ','
+            );
+
+            return $currencySettings['currency_position'] === 'before'
+                ? $currencySettings['currency_symbol'].$formatted
+                : $formatted.$currencySettings['currency_symbol'];
+        };
+
         return $schema
             ->components([
                 Section::make('Product Information')
@@ -50,14 +66,14 @@ class ProductInfolist
 
                                 TextEntry::make('price')
                                     ->label('Unit Price')
-                                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state * 1)))
                                     ->weight('semibold')
                                     ->color('success')
                                     ->alignment('right'),
 
                                 TextEntry::make('minimum_amount')
                                     ->label('Minimum Stock Level')
-                                    ->formatStateUsing(fn ($state) => \App\Models\Setting::formatMoney((int) round($state * 1)))
+                                    ->formatStateUsing(fn ($state) => $formatMoney((int) round($state * 1)))
                                     ->badge()
                                     ->color('warning')
                                     ->alignment('right'),

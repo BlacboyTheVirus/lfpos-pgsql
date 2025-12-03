@@ -16,6 +16,9 @@ class ExpenseForm
 {
     public static function configure(Schema $schema): Schema
     {
+        // Cache currency symbol once to avoid repeated queries
+        $currencySymbol = \App\Models\Setting::get('currency_symbol', '₦');
+
         return $schema
             ->components([
                 Section::make('Expense Information')
@@ -58,7 +61,7 @@ class ExpenseForm
                                     ->minValue(0.01)
                                     ->step(0.01)
                                     ->placeholder('0.00')
-                                    ->prefix(\App\Models\Setting::get('currency_symbol', '₦')),
+                                    ->prefix($currencySymbol),
 
                             ]),
 

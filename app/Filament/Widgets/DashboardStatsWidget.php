@@ -44,10 +44,10 @@ class DashboardStatsWidget extends BaseWidget
     }
 
     /**
-     * Cache stats data to prevent redundant queries during Livewire re-renders.
-     * Caches for 5 minutes.
+     * Cache stats data for 5 minutes (reactive to filter changes).
+     * Removed persist: true to allow recalculation when date filters change.
      */
-    #[Computed(persist: true, seconds: 300)]
+    #[Computed(seconds: 300)]
     public function cachedStatsData(): array
     {
         // Current period data - combined query

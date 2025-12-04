@@ -31,6 +31,22 @@ class InvoiceForm
     private static array $productCache = [];
 
     /**
+     * Request-level cache for Customer model lookups
+     * Prevents redundant Customer::find() calls during form operations
+     *
+     * @var array<int, Customer|null>
+     */
+    private static array $customerCache = [];
+
+    /**
+     * Request-level cache for customer outstanding due amounts
+     * Prevents redundant aggregate queries for the same customer
+     *
+     * @var array<int, float>
+     */
+    private static array $customerOutstandingCache = [];
+
+    /**
      * Get or cache a Product model instance for the current request
      *
      * Uses a static cache that persists for the duration of the request,
@@ -46,6 +62,41 @@ class InvoiceForm
             self::$productCache[$productId] = Product::find($productId);
         }
         return self::$productCache[$productId];
+    }
+
+    /**
+     * Get or cache a Customer model instance for the current request
+     *
+     * @param int $customerId
+     * @return Customer|null
+     */
+    private static function getCustomerCached(int $customerId): ?Customer
+    {
+        if (!isset(self::$customerCache[$customerId])) {
+            self::$customerCache[$customerId] = Customer::find($customerId);
+        }
+        return self::$customerCache[$customerId];
+    }
+
+    /**
+     * Get or cache a customer's outstanding due amount for the current request
+     *
+     * @param int $customerId
+     * @return float
+     */
+    private static function getCustomerOutstandingCached(int $customerId): float
+    {
+        if (!isset(self::$customerOutstandingCache[$customerId])) {
+            $customer = self::getCustomerCached($customerId);
+            if ($customer) {
+                self::$customerOutstandingCache[$customerId] = $customer->invoices()
+                    ->where('status', '!=', InvoiceStatus::Paid)
+                    ->sum('due');
+            } else {
+                self::$customerOutstandingCache[$customerId] = 0;
+            }
+        }
+        return self::$customerOutstandingCache[$customerId];
     }
 
     public static function getFormComponents(): array
@@ -118,14 +169,12 @@ class InvoiceForm
                                             return null;
                                         }
 
-                                        $customer = Customer::find($customerId);
+                                        $customer = self::getCustomerCached($customerId);
                                         if (! $customer) {
                                             return null;
                                         }
 
-                                        $totalDue = $customer->invoices()
-                                            ->where('status', '!=', InvoiceStatus::Paid)
-                                            ->sum('due');
+                                        $totalDue = self::getCustomerOutstandingCached($customerId);
 
                                         if ($totalDue > 0) {
                                             return new \Illuminate\Support\HtmlString(
@@ -140,12 +189,11 @@ class InvoiceForm
                                     })
                                     ->afterStateUpdated(function ($state, callable $set, callable $get, $livewire) {
                                         if ($state) {
-                                            $customer = Customer::find($state);
+                                            // Use cached customer and outstanding amount
+                                            $customer = self::getCustomerCached($state);
                                             if ($customer) {
-                                                // Calculate previous due amount
-                                                $previousDue = $customer->invoices()
-                                                    ->where('status', '!=', InvoiceStatus::Paid)
-                                                    ->sum('due');
+                                                // Calculate previous due amount (uses cache)
+                                                $previousDue = self::getCustomerOutstandingCached($state);
                                             }
                                             // Dispatch browser event to focus date field
                                             $livewire->dispatch('focus-date-field');
@@ -439,7 +487,7 @@ class InvoiceForm
                                                                     return; // Skip validation if no customer or total
                                                                 }
 
-                                                                $customer = Customer::find($customerId);
+                                                                $customer = self::getCustomerCached($customerId);
                                                                 if (! $customer) {
                                                                     return; // Skip if customer not found
                                                                 }

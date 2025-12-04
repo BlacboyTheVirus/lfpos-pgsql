@@ -30,10 +30,10 @@ class InvoiceTotalsChart extends ChartWidget
     ];
 
     /**
-     * Cache chart data to prevent redundant queries during Livewire re-renders.
-     * Caches for 5 minutes.
+     * Cache chart data for 5 minutes (reactive to filter changes).
+     * Removed persist: true to allow recalculation when date filters change.
      */
-    #[Computed(persist: true, seconds: 300)]
+    #[Computed(seconds: 300)]
     public function cachedChartData(): array
     {
         $dateRange = $this->getDateRangeFromFilters();

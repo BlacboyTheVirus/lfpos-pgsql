@@ -10,36 +10,63 @@
 </head>
 <body class="min-h-screen bg-white flex items-center justify-center font-sans text-gray-900 antialiased">
     <div class="max-w-md mx-auto p-8 text-center">
+        @php
+            // Gracefully handle database failures when loading logo
+            $companyLogo = null;
+            try {
+                $companyLogo = \App\Models\Setting::get('company_logo');
+            } catch (\Exception $e) {
+                // Database is down, use default logo
+                $companyLogo = null;
+            }
+        @endphp
+
+        <!-- Logo Section -->
+        <div class="mb-6">
+            @if($companyLogo && \Illuminate\Support\Facades\Storage::exists($companyLogo))
+                <img src="{{ \Illuminate\Support\Facades\Storage::url($companyLogo) }}"
+                     alt="{{ config('app.name') }}"
+                     class="h-16 mx-auto mb-4">
+            @else
+                <img src="{{ asset('logo.png') }}"
+                     alt="{{ config('app.name') }}"
+                     class="h-16 mx-auto mb-4">
+            @endif
+        </div>
+
+        <!-- Icon and Message -->
         <div class="mb-8">
             <div class="inline-flex items-center justify-center w-20 h-20 bg-red-100 rounded-full mb-4">
                 <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1-1.964-1-2.732 0L3.732 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
             </div>
             <h1 class="text-2xl font-bold text-gray-900 mb-2">Something Went Wrong</h1>
             <p class="text-gray-600 mb-6">
-                We encountered an unexpected error while processing your request. Our team has been automatically notified.
+                We encountered an unexpected error while processing your request. Our team has been automatically notified and is working to fix this.
             </p>
         </div>
 
+        <!-- Action Buttons -->
         <div class="space-y-4">
             <button onclick="window.history.back()"
-                    class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150">
+                    class="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-150"
+                    style="background-color: #16a34a; hover:background-color: #15803d;">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
                 Go Back
             </button>
 
-            <a href="/"
-               class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <a href="/admin"
+               class="block px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-150">
+                <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                 </svg>
-                Return Home
+                Return to Dashboard
             </a>
 
-            <p class="text-sm text-gray-500">
+            <p class="text-sm text-gray-500 mt-4">
                 Error Code: 500
             </p>
         </div>

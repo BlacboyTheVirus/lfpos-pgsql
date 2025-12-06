@@ -116,7 +116,75 @@ class AdminPanelProvider extends PanelProvider
             )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn (): string => Blade::render('<livewire:global-search-modal />').'<script>
+                fn (): string => Blade::render('<livewire:global-search-modal />').'
+                <script>
+                    // Global keyboard shortcut for Create action (Cmd+Option+N or Ctrl+Alt+N)
+                    console.log("Keyboard shortcut script loaded globally!");
+
+                    document.addEventListener("keydown", function(event) {
+                        // Check for Cmd+Option+N (Mac) or Ctrl+Alt+N (Windows/Linux)
+                        // Use event.code instead of event.key because Cmd+Option+N produces a special character on Mac
+                        if (event.code === "KeyN") {
+                            if ((event.metaKey && event.altKey) || (event.ctrlKey && event.altKey)) {
+                                console.log("Keyboard shortcut triggered!");
+                                event.preventDefault();
+
+                                // Try to find the create button/link in header actions and click it
+                                let createButton = null;
+
+                                // Try to find in the header actions area first
+                                const headerActions = document.querySelector(".fi-header-actions, [class*=\'header-actions\']");
+                                if (headerActions) {
+                                    // Look for any button or link that might be the create action
+                                    createButton = headerActions.querySelector("button, a");
+                                    console.log("Found button in header actions:", createButton);
+                                }
+
+                                // Fallback: try other selectors
+                                if (!createButton) {
+                                    createButton = document.querySelector(
+                                        "button[wire\\\\:click*=\'mountAction\']," +
+                                        "a[wire\\\\:click*=\'mountAction\']," +
+                                        "button[type=\'button\'][wire\\\\:click]," +
+                                        "a[href*=\'create\']"
+                                    );
+                                }
+
+                                if (createButton) {
+                                    console.log("Found create button, clicking it:", createButton);
+                                    createButton.click();
+                                    return;
+                                }
+
+                                console.log("Create button not found, trying Livewire approach");
+
+                                // Fallback: Find the Livewire component and call mountAction
+                                const livewireElement = document.querySelector("[wire\\\\:id]");
+
+                                if (livewireElement) {
+                                    const componentId = livewireElement.getAttribute("wire:id");
+                                    console.log("Component ID:", componentId);
+                                    const livewireComponent = Livewire.find(componentId);
+
+                                    if (livewireComponent) {
+                                        console.log("Livewire component found, calling mountAction");
+                                        try {
+                                            livewireComponent.call("mountAction", "create");
+                                            console.log("mountAction called successfully");
+                                        } catch (error) {
+                                            console.error("Error calling mountAction:", error);
+                                        }
+                                    } else {
+                                        console.error("Livewire component not found for ID:", componentId);
+                                    }
+                                } else {
+                                    console.error("No Livewire element found on page");
+                                }
+                            }
+                        }
+                    });
+                </script>
+                <script>
                     document.addEventListener("DOMContentLoaded", function() {
                         // Global Search Slide Effect
                         function initializeGlobalSearchSlideEffect() {

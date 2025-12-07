@@ -167,8 +167,9 @@ class ExpenseStatsOverview extends StatsOverviewWidget
 
         // Populate with actual data
         foreach ($results as $result) {
-            $date = $result->date;
-            $category = $result->category;
+            // Convert Carbon date and enum to string values for use as array keys (PHP 8.4 compatibility)
+            $date = $result->date->toDateString();
+            $category = $result->category->value;
             $amount = round($result->total / 100);
 
             if (isset($chartData[$category][$date])) {

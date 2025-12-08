@@ -9,6 +9,7 @@ enum ExpenseCategory: string
     case Utilities = 'utilities';
     case RepairsAndCleaning = 'repairs_and_cleaning';
     case Staff = 'staff';
+    case Assets = 'assets';
 
     public function getLabel(): string
     {
@@ -18,6 +19,7 @@ enum ExpenseCategory: string
             self::Utilities => 'Utilities',
             self::RepairsAndCleaning => 'Repairs & Cleaning',
             self::Staff => 'Staff',
+            self::Assets => 'Assets',
         };
     }
 
@@ -29,6 +31,7 @@ enum ExpenseCategory: string
             self::Utilities => 'warning',
             self::RepairsAndCleaning => 'danger',
             self::Staff => 'info',
+            self::Assets => 'cyan',
         };
     }
 
@@ -47,11 +50,12 @@ enum ExpenseCategory: string
             self::Utilities => 'heroicon-o-bolt',
             self::RepairsAndCleaning => 'heroicon-o-wrench-screwdriver',
             self::Staff => 'heroicon-o-users',
+            self::Assets => 'heroicon-o-box',
         };
     }
 
     public static function getDefault(): self
     {
-        return self::Miscellaneous;
+        return self::Materials;
     }
 }

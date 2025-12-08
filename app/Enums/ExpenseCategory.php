@@ -32,6 +32,7 @@ enum ExpenseCategory: string
             self::RepairsAndCleaning => 'danger',
             self::Staff => 'info',
             self::Assets => 'cyan',
+
         };
     }
 

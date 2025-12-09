@@ -56,9 +56,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([])
             ->plugins([
-                FilamentShieldPlugin::make()
-                    ->navigationGroup('System')
-                    ->navigationSort(70),
+                // FilamentShieldPlugin disabled - using basic authentication only
             ])
             ->assets([
                 Css::make('admin-fixes', asset('css/admin-fixes.css')),

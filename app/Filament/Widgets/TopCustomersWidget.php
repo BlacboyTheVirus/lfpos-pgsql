@@ -6,7 +6,6 @@ use App\Filament\Pages\Dashboard;
 use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Traits\HasDateFiltering;
 use App\Models\Customer;
-use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
@@ -16,7 +15,6 @@ use Illuminate\Database\Eloquent\Builder;
 class TopCustomersWidget extends BaseWidget
 {
     use HasDateFiltering;
-    use HasWidgetShield;
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 4;

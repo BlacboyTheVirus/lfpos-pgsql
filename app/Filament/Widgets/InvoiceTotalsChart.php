@@ -4,7 +4,6 @@ namespace App\Filament\Widgets;
 
 use App\Filament\Traits\HasDateFiltering;
 use App\Models\Invoice;
-use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
@@ -13,7 +12,6 @@ use Livewire\Attributes\Computed;
 class InvoiceTotalsChart extends ChartWidget
 {
     use HasDateFiltering;
-    use HasWidgetShield;
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 2;

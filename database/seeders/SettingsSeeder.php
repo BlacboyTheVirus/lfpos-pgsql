@@ -22,6 +22,8 @@ class SettingsSeeder extends Seeder
             'currency_symbol' => '₦',
             'currency_position' => 'before',
             'decimal_places' => '0',
+            'thousands_separator' => ',',
+            'decimal_separator' => '.',
 
             // Application Preferences
             'date_format' => 'Y-m-d',

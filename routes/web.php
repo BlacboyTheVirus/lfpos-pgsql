@@ -19,6 +19,9 @@ Route::get('/debug-permissions', function () {
         return response()->json(['error' => 'Not authenticated. Please log in first.'], 401);
     }
 
+    // Test Gate with a fake permission to see if before hook is working
+    $fakePermissionTest = \Illuminate\Support\Facades\Gate::forUser($user)->allows('some_fake_permission_that_doesnt_exist');
+
     return response()->json([
         'user' => [
             'id' => $user->id,
@@ -31,6 +34,13 @@ Route::get('/debug-permissions', function () {
             'super_admin_name' => config('filament-shield.super_admin.name'),
             'define_via_gate' => config('filament-shield.super_admin.define_via_gate'),
             'gate_interception' => config('filament-shield.super_admin.intercept_gate'),
+        ],
+        'gate_bypass_test' => [
+            'has_super_admin_role' => $user->hasRole('super_admin'),
+            'fake_permission_allowed' => $fakePermissionTest,
+            'explanation' => $fakePermissionTest
+                ? 'Gate bypass IS working - super_admin bypasses all checks'
+                : 'Gate bypass NOT working - should allow fake permission for super_admin',
         ],
         'permissions_check' => [
             'view_dashboard_stats_widget' => $user->can('view_dashboard_stats_widget'),

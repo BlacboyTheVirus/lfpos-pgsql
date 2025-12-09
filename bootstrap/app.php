@@ -14,34 +14,21 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         //
     })
+    ->withBindings([
+        // Disable policy auto-discovery by providing empty policy map
+        \Illuminate\Auth\Access\Gate::class => function ($app) {
+            $gate = new \Illuminate\Auth\Access\Gate($app, function () use ($app) {
+                return $app['auth']->user();
+            });
+
+            // Register a global before callback that allows everything
+            $gate->before(function ($user, $ability) {
+                return true;
+            });
+
+            return $gate;
+        },
+    ])
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (Illuminate\Database\QueryException $e, $request) {
-            // Handle database connection errors gracefully
-            if (str_contains($e->getMessage(), 'Connection refused') ||
-                str_contains($e->getMessage(), 'Connection timed out') ||
-                str_contains($e->getMessage(), 'SQLSTATE[HY000]') ||
-                str_contains($e->getMessage(), 'SQLSTATE[08006]')) {
-
-                if ($request->expectsJson()) {
-                    return response()->json([
-                        'error' => 'Service temporarily unavailable. Please try again later.',
-                        'message' => 'We are experiencing technical difficulties.',
-                    ], 503);
-                }
-
-                return response()->view('errors.503', [], 503);
-            }
-        });
-
-        $exceptions->render(function (Illuminate\Database\ConnectionException $e, $request) {
-            // Handle specific database connection exceptions
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'error' => 'Service temporarily unavailable. Please try again later.',
-                    'message' => 'We are experiencing technical difficulties.',
-                ], 503);
-            }
-
-            return response()->view('errors.503', [], 503);
-        });
+        //
     })->create();

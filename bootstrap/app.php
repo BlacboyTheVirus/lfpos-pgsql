@@ -35,16 +35,4 @@ return Application::configure(basePath: dirname(__DIR__))
             // Let Laravel continue to other exception handlers
             return null;
         });
-
-        $exceptions->render(function (Illuminate\Database\ConnectionException $e, $request) {
-            // Handle specific database connection exceptions
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'error' => 'Service temporarily unavailable. Please try again later.',
-                    'message' => 'We are experiencing technical difficulties.',
-                ], 503);
-            }
-
-            return response()->view('errors.503', [], 503);
-        });
     })->create();

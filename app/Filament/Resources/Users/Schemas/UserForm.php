@@ -25,8 +25,20 @@ class UserForm
                     ->maxLength(255),
                 Select::make('roles')
                     ->label('Role')
-                    ->relationship('roles', 'name')
-                    ->options(fn () => \App\Models\Role::whereNot('name', 'super_admin')->pluck('name', 'id'))
+                    ->relationship('roles', 'name', modifyQueryUsing: fn ($query) => $query->whereNot('name', 'super_admin')->whereNot('name', 'panel_user'))
+                    ->saveRelationshipsUsing(function (Select $component, $state, $record) {
+                        // Get the selected role IDs
+                        $roles = collect($state);
+
+                        // Add panel_user role
+                        $panelUserRole = \Spatie\Permission\Models\Role::where('name', 'panel_user')->first();
+                        if ($panelUserRole && !$roles->contains($panelUserRole->id)) {
+                            $roles->push($panelUserRole->id);
+                        }
+
+                        // Sync all roles
+                        $record->roles()->sync($roles->toArray());
+                    })
                     ->multiple()
                     ->maxItems(1)
                     ->searchable()

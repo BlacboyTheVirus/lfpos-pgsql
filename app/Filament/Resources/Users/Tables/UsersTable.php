@@ -31,6 +31,12 @@ class UsersTable
                     ->label('Role')
                     ->badge()
                     ->color('primary')
+                    ->getStateUsing(function ($record) {
+                        return $record->roles()
+                            ->where('name', '!=', 'panel_user')
+                            ->pluck('name')
+                            ->toArray();
+                    })
                     ->searchable(),
                 TextColumn::make('email_verified_at')
                     ->dateTime()

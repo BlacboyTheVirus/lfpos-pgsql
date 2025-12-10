@@ -10,15 +10,6 @@ class SettingPolicy
 {
     use HandlesAuthorization;
 
-    /**
-     * Allow all authenticated users to perform any action.
-     * RBAC disabled - using basic authentication only.
-     */
-    public function before(User $user, string $ability): ?bool
-    {
-        return true;
-    }
-
     public function viewAny(User $user): bool
     {
         return $user->can('view_any_setting');

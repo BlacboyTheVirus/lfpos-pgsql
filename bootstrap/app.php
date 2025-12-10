@@ -14,21 +14,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         //
     })
-    ->withBindings([
-        // Disable policy auto-discovery by providing empty policy map
-        \Illuminate\Auth\Access\Gate::class => function ($app) {
-            $gate = new \Illuminate\Auth\Access\Gate($app, function () use ($app) {
-                return $app['auth']->user();
-            });
-
-            // Register a global before callback that allows everything
-            $gate->before(function ($user, $ability) {
-                return true;
-            });
-
-            return $gate;
-        },
-    ])
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (Illuminate\Database\QueryException $e, $request) {
             // Handle database connection errors gracefully

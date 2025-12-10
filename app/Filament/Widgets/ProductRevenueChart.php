@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Traits\HasDateFiltering;
 use App\Models\InvoiceProduct;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,7 @@ use Livewire\Attributes\Computed;
 class ProductRevenueChart extends ChartWidget
 {
     use HasDateFiltering;
+    use HasWidgetShield;
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 3;

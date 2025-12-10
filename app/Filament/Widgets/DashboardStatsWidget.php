@@ -6,6 +6,7 @@ use App\Filament\Pages\Dashboard;
 use App\Filament\Traits\HasDateFiltering;
 use App\Models\Expense;
 use App\Models\Invoice;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Carbon\Carbon;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
@@ -16,6 +17,7 @@ use Livewire\Attributes\Computed;
 class DashboardStatsWidget extends BaseWidget
 {
     use HasDateFiltering;
+    use HasWidgetShield;
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 1;

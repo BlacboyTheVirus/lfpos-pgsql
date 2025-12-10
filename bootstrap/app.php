@@ -31,6 +31,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 return response()->view('errors.503', [], 503);
             }
+
+            // Let Laravel continue to other exception handlers
+            return null;
         });
 
         $exceptions->render(function (Illuminate\Database\ConnectionException $e, $request) {

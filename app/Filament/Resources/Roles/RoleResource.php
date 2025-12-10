@@ -93,7 +93,7 @@ class RoleResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn ($query) => $query->whereNot('name', 'super_admin'))
+            ->modifyQueryUsing(fn ($query) => $query->whereNotIn('name', ['super_admin', 'panel_user']))
             ->columns([
                 TextColumn::make('name')
                     ->weight(FontWeight::Medium)
@@ -125,9 +125,9 @@ class RoleResource extends Resource
             ])
             ->recordActions([
                 EditAction::make()
-                    ->hidden(fn ($record) => $record->name === 'super_admin'),
+                    ->hidden(fn ($record) => in_array($record->name, ['super_admin', 'panel_user'])),
                 DeleteAction::make()
-                    ->hidden(fn ($record) => $record->name === 'super_admin'),
+                    ->hidden(fn ($record) => in_array($record->name, ['super_admin', 'panel_user'])),
             ])
             ->toolbarActions([
                 DeleteBulkAction::make(),

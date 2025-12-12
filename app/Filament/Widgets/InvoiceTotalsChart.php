@@ -75,8 +75,8 @@ class InvoiceTotalsChart extends ChartWidget
             $dueAmount = $totalAmount - $paidAmount;
 
             $labels[] = $date->format('M Y');
-            $chartData['paid'][] = round($paidAmount, 2);
-            $chartData['due'][] = round($dueAmount, 2);
+            $chartData['paid'][] = round($paidAmount / 100, 2);
+            $chartData['due'][] = round($dueAmount / 100, 2);
         }
 
         return [
@@ -133,8 +133,8 @@ class InvoiceTotalsChart extends ChartWidget
             $dueAmount = $totalAmount - $paidAmount;
 
             $labels[] = $current->format('M j');
-            $chartData['paid'][] = round($paidAmount, 2);
-            $chartData['due'][] = round($dueAmount, 2);
+            $chartData['paid'][] = round($paidAmount / 100, 2);
+            $chartData['due'][] = round($dueAmount / 100, 2);
 
             $current->addDay();
         }
@@ -180,8 +180,8 @@ class InvoiceTotalsChart extends ChartWidget
             $dueAmount = $totalAmount - $paidAmount;
 
             $labels[] = $current->format('M Y');
-            $chartData['paid'][] = round($paidAmount, 2);
-            $chartData['due'][] = round($dueAmount, 2);
+            $chartData['paid'][] = round($paidAmount / 100, 2);
+            $chartData['due'][] = round($dueAmount / 100, 2);
 
             $current->addMonth();
         }

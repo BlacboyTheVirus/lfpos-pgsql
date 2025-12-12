@@ -57,26 +57,49 @@ class InvoiceTotalsChart extends ChartWidget
 
     protected function getAllTimeChartData(): array
     {
-        // Get last 12 months of data
+        // Get all invoice data from first invoice to today
         $chartData = [];
         $labels = [];
 
-        for ($i = 11; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
-            $startOfMonth = $date->copy()->startOfMonth()->toDateString();
-            $endOfMonth = $date->copy()->endOfMonth()->toDateString();
+        // Get the earliest invoice date
+        $earliestDate = $this->getEarliestInvoiceDate();
 
-            $stats = Invoice::whereBetween('date', [$startOfMonth, $endOfMonth])
-                ->selectRaw('COALESCE(SUM(total), 0) as total_amount, COALESCE(SUM(paid), 0) as paid_amount')
-                ->first();
+        // If no invoices exist, show last 12 months as fallback
+        if (!$earliestDate) {
+            $earliestDate = now()->subMonths(11)->startOfMonth();
+        }
+
+        // Use single optimized query with DATE_TRUNC for PostgreSQL
+        $results = Invoice::selectRaw("
+                DATE_TRUNC('month', date) as month,
+                COALESCE(SUM(total), 0) as total_amount,
+                COALESCE(SUM(paid), 0) as paid_amount
+            ")
+            ->where('date', '>=', $earliestDate->toDateString())
+            ->groupBy('month')
+            ->orderBy('month', 'asc')
+            ->get();
+
+        // Create a lookup map for faster access
+        $resultMap = $results->keyBy(fn ($r) => Carbon::parse($r->month)->format('Y-m'));
+
+        // Generate all months in range (to fill gaps for months with no invoices)
+        $currentDate = $earliestDate->copy();
+        $endDate = now()->endOfMonth();
+
+        while ($currentDate->lte($endDate)) {
+            $monthKey = $currentDate->format('Y-m');
+            $stats = $resultMap->get($monthKey);
 
             $totalAmount = $stats->total_amount ?? 0;
             $paidAmount = $stats->paid_amount ?? 0;
             $dueAmount = $totalAmount - $paidAmount;
 
-            $labels[] = $date->format('M Y');
+            $labels[] = $currentDate->format('M Y');
             $chartData['paid'][] = round($paidAmount / 100, 2);
             $chartData['due'][] = round($dueAmount / 100, 2);
+
+            $currentDate->addMonth();
         }
 
         return [
@@ -98,6 +121,17 @@ class InvoiceTotalsChart extends ChartWidget
             ],
             'labels' => $labels,
         ];
+    }
+
+    /**
+     * Get the date of the first invoice in the system.
+     * Returns null if no invoices exist.
+     */
+    protected function getEarliestInvoiceDate(): ?Carbon
+    {
+        $firstInvoice = Invoice::orderBy('date', 'asc')->first();
+
+        return $firstInvoice ? Carbon::parse($firstInvoice->date)->startOfMonth() : null;
     }
 
     protected function getDateRangeChartData(string $startDate, string $endDate): array

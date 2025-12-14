@@ -246,7 +246,7 @@ class InvoiceTotalsChart extends ChartWidget
         return [
             'responsive' => true,
             'maintainAspectRatio' => true,
-            'aspectRatio' => 1.8,
+            'aspectRatio' => 2,
             'plugins' => [
                 'legend' => [
                     'display' => true,

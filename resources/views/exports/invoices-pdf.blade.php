@@ -128,15 +128,15 @@
         </div>
         <div class="summary-box">
             <h3>Total Amount</h3>
-            <p>₦{{ number_format($invoices->sum('total'), 2, '.', ',') }}</p>
+            <p>N{{ number_format($invoices->sum('total'), 2, '.', ',') }}</p>
         </div>
         <div class="summary-box">
             <h3>Total Paid</h3>
-            <p>₦{{ number_format($invoices->sum('paid'), 2, '.', ',') }}</p>
+            <p>N{{ number_format($invoices->sum('paid'), 2, '.', ',') }}</p>
         </div>
         <div class="summary-box">
             <h3>Total Due</h3>
-            <p>₦{{ number_format($invoices->sum('due'), 2, '.', ',') }}</p>
+            <p>N{{ number_format($invoices->sum('due'), 2, '.', ',') }}</p>
         </div>
     </div>
 
@@ -159,9 +159,9 @@
                     <td>{{ $invoice->code }}</td>
                     <td>{{ $invoice->customer?->name ?? 'N/A' }}</td>
                     <td>{{ $invoice->date?->format('d-m-Y') }}</td>
-                    <td class="text-right">₦{{ number_format($invoice->total, 0, '.', ',') }}</td>
-                    <td class="text-right">₦{{ number_format($invoice->paid, 0, '.', ',') }}</td>
-                    <td class="text-right">₦{{ number_format($invoice->due, 0, '.', ',') }}</td>
+                    <td class="text-right">N{{ number_format($invoice->total, 0, '.', ',') }}</td>
+                    <td class="text-right">N{{ number_format($invoice->paid, 0, '.', ',') }}</td>
+                    <td class="text-right">N{{ number_format($invoice->due, 0, '.', ',') }}</td>
                     <td>
                         <span class="status-badge status-{{ strtolower($invoice->status?->value ?? 'unpaid') }}">
                             {{ $invoice->status?->getLabel() ?? 'N/A' }}
@@ -182,13 +182,13 @@
                         <strong>Total:</strong>
                     </td>
                     <td style="border: none; border-top: 2px solid #e5e5e5; padding-top: 15px; font-weight: bold;" class="text-right">
-                        ₦{{ number_format($invoices->sum('total'), 0, '.', ',') }}
+                        N{{ number_format($invoices->sum('total'), 0, '.', ',') }}
                     </td>
                     <td style="border: none; border-top: 2px solid #e5e5e5; padding-top: 15px; font-weight: bold;" class="text-right">
-                        ₦{{ number_format($invoices->sum('paid'), 0, '.', ',') }}
+                        N{{ number_format($invoices->sum('paid'), 0, '.', ',') }}
                     </td>
                     <td style="border: none; border-top: 2px solid #e5e5e5; padding-top: 15px; font-weight: bold;" class="text-right">
-                        ₦{{ number_format($invoices->sum('due'), 0, '.', ',') }}
+                        N{{ number_format($invoices->sum('due'), 0, '.', ',') }}
                     </td>
                     <td colspan="2" style="border: none;"></td>
                 </tr>

@@ -130,11 +130,11 @@
         </div>
         <div class="summary-box">
             <h3>Total Amount</h3>
-            <p>₦{{ number_format($expenses->sum('amount'), 2, '.', ',') }}</p>
+            <p>N{{ number_format($expenses->sum('amount'), 2, '.', ',') }}</p>
         </div>
         <div class="summary-box">
             <h3>Average Amount</h3>
-            <p>₦{{ number_format($expenses->avg('amount'), 2, '.', ',') }}</p>
+            <p>N{{ number_format($expenses->avg('amount'), 2, '.', ',') }}</p>
         </div>
     </div>
 

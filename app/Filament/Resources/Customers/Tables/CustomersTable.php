@@ -478,15 +478,14 @@ class CustomersTable
                                 ->send();
                         }),
 
-                    Action::make('export-selected-csv')
+                    BulkAction::make('export-selected-csv')
                         ->label('Export Selected CSV')
                         ->icon(Heroicon::OutlinedDocumentText)
                         ->color('primary')
                         ->deselectRecordsAfterCompletion()
-                        ->action(function (array $data) {
+                        ->action(function (Collection $records) {
                             // Get selected records
-                            $records = collect($data['selectedTableRecords']);
-                            $customerIds = $records->map(fn ($record) => $record['id'])->toArray();
+                            $customerIds = $records->pluck('id')->toArray();
 
                             $customers = \App\Models\Customer::whereIn('id', $customerIds)
                                 ->with(['createdBy'])
@@ -543,15 +542,14 @@ class CustomersTable
                             return response()->stream($callback, 200, $headers);
                         }),
 
-                    Action::make('export-selected-excel')
+                    BulkAction::make('export-selected-excel')
                         ->label('Export Selected Excel')
                         ->icon(Heroicon::OutlinedTableCells)
                         ->color('success')
                         ->deselectRecordsAfterCompletion()
-                        ->action(function (array $data) {
+                        ->action(function (Collection $records) {
                             // Get selected records
-                            $records = collect($data['selectedTableRecords']);
-                            $customerIds = $records->map(fn ($record) => $record['id'])->toArray();
+                            $customerIds = $records->pluck('id')->toArray();
 
                             $customers = \App\Models\Customer::whereIn('id', $customerIds)
                                 ->with(['createdBy'])
@@ -611,15 +609,14 @@ class CustomersTable
                             return response()->stream($callback, 200, $headers);
                         }),
 
-                    Action::make('export-selected-pdf')
+                    BulkAction::make('export-selected-pdf')
                         ->label('Export Selected PDF')
                         ->icon(Heroicon::OutlinedDocumentArrowDown)
                         ->color('info')
                         ->deselectRecordsAfterCompletion()
-                        ->action(function (array $data) {
+                        ->action(function (Collection $records) {
                             // Get selected records
-                            $records = collect($data['selectedTableRecords']);
-                            $customerIds = $records->map(fn ($record) => $record['id'])->toArray();
+                            $customerIds = $records->pluck('id')->toArray();
 
                             $customers = \App\Models\Customer::whereIn('id', $customerIds)
                                 ->with(['createdBy'])

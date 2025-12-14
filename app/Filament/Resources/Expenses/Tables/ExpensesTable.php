@@ -403,15 +403,14 @@ class ExpensesTable
                                 ->send();
                         }),
 
-                    Action::make('export-selected-csv')
+                    BulkAction::make('export-selected-csv')
                         ->label('Export Selected CSV')
                         ->icon(Heroicon::OutlinedDocumentText)
                         ->color('primary')
                         ->deselectRecordsAfterCompletion()
-                        ->action(function (array $data) {
+                        ->action(function (Collection $records) {
                             // Get selected records
-                            $records = collect($data['selectedTableRecords']);
-                            $expenseIds = $records->map(fn ($record) => $record['id'])->toArray();
+                            $expenseIds = $records->pluck('id')->toArray();
 
                             $expenses = \App\Models\Expense::whereIn('id', $expenseIds)
                                 ->with(['createdBy'])
@@ -461,15 +460,14 @@ class ExpensesTable
                             return response()->stream($callback, 200, $headers);
                         }),
 
-                    Action::make('export-selected-excel')
+                    BulkAction::make('export-selected-excel')
                         ->label('Export Selected Excel')
                         ->icon(Heroicon::OutlinedTableCells)
                         ->color('success')
                         ->deselectRecordsAfterCompletion()
-                        ->action(function (array $data) {
+                        ->action(function (Collection $records) {
                             // Get selected records
-                            $records = collect($data['selectedTableRecords']);
-                            $expenseIds = $records->map(fn ($record) => $record['id'])->toArray();
+                            $expenseIds = $records->pluck('id')->toArray();
 
                             $expenses = \App\Models\Expense::whereIn('id', $expenseIds)
                                 ->with(['createdBy'])
@@ -522,15 +520,14 @@ class ExpensesTable
                             return response()->stream($callback, 200, $headers);
                         }),
 
-                    Action::make('export-selected-pdf')
+                    BulkAction::make('export-selected-pdf')
                         ->label('Export Selected PDF')
                         ->icon(Heroicon::OutlinedDocumentArrowDown)
                         ->color('info')
                         ->deselectRecordsAfterCompletion()
-                        ->action(function (array $data) {
+                        ->action(function (Collection $records) {
                             // Get selected records
-                            $records = collect($data['selectedTableRecords']);
-                            $expenseIds = $records->map(fn ($record) => $record['id'])->toArray();
+                            $expenseIds = $records->pluck('id')->toArray();
 
                             $expenses = \App\Models\Expense::whereIn('id', $expenseIds)
                                 ->with(['createdBy'])

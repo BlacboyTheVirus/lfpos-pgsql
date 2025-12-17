@@ -131,10 +131,25 @@ class InvoiceForm
 
                                 Select::make('customer_id')
                                     ->label('Customer')
-                                    ->relationship('customer', 'name')
+                                    ->relationship(
+                                        name: 'customer',
+                                        titleAttribute: 'name',
+                                        modifyQueryUsing: function ($query, ?string $search) {
+                                            // Get walk-in customer to order it first
+                                            $walkinCustomer = Customer::walkin()->first();
+
+                                            if ($walkinCustomer) {
+                                                // Order Walk-in Customer first, then others alphabetically
+                                                return $query->orderByRaw("CASE WHEN id = ? THEN 0 ELSE 1 END, name ASC", [$walkinCustomer->id]);
+                                            }
+
+                                            // If no walk-in customer, just order by name
+                                            return $query->orderBy('name');
+                                        }
+                                    )
                                     ->searchable()
-                                    ->native(false)
                                     ->preload()
+                                    ->native(false)
                                     ->required()
                                     ->autofocus()
                                     ->selectablePlaceholder(false)

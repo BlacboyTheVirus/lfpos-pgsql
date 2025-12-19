@@ -303,7 +303,7 @@ class InvoiceForm
 
                                         TextInput::make('width')
                                             ->required()
-                                            ->live(debounce: 800)
+                                            ->live(onBlur: true)
                                             ->inputMode('decimal')
                                             ->rules(['required', 'numeric', 'min:0.01', 'regex:/^\d+(\.\d{1,2})?$/'])
                                             ->validationMessages([
@@ -324,7 +324,7 @@ class InvoiceForm
 
                                         TextInput::make('height')
                                             ->required()
-                                            ->live(debounce: 800)
+                                            ->live(onBlur: true)
                                             ->inputMode('decimal')
                                             ->rules(['required', 'numeric', 'min:0.01', 'regex:/^\d+(\.\d{1,2})?$/'])
                                             ->validationMessages([
@@ -369,10 +369,6 @@ class InvoiceForm
                                         TextInput::make('product_amount')
                                             ->disabled()
                                             ->dehydrated()
-                                            ->live()
-                                            ->afterStateUpdated(function (callable $set, callable $get) {
-                                                self::updateTotals($set, $get);
-                                            })
                                             ->extraInputAttributes([
                                                 'class' => 'text-right pr-0 sm:pr-3 md:pr-[25px] lg:pr-3 min-w-[100px] sm:min-w-[120px]',
                                             ]),

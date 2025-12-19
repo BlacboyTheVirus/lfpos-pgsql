@@ -350,7 +350,7 @@ class InvoiceForm
                                         TextInput::make('quantity')
                                             ->required()
                                             ->default(1)
-                                            ->live(debounce: 800)
+                                            ->live(onBlur: true)
                                             ->inputMode('numeric')
                                             ->rules(['required', 'integer', 'min:1', 'regex:/^\d+$/'])
                                             ->validationMessages([
@@ -446,7 +446,7 @@ class InvoiceForm
 
                                                         TextInput::make('amount')
                                                             ->required()
-                                                            ->live(debounce: 800)
+                                                            ->live(onBlur: true)
                                                             ->inputMode('decimal')
                                                             ->rules(['required', 'numeric', 'min:0.01', 'regex:/^\d+(\.\d{1,2})?$/'])
                                                             ->validationMessages([

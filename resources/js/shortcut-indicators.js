@@ -10,6 +10,15 @@ class ShortcutIndicators {
         this.modifierKey = this.isMac ? 'metaKey' : 'ctrlKey';
         this.modifierSymbol = this.isMac ? '⌘' : 'Ctrl';
 
+        // Store event handler references for cleanup
+        this.keydownHandler = null;
+        this.modifierKeydownHandler = null;
+        this.modifierKeyupHandler = null;
+        this.blurHandler = null;
+
+        // Debounce timestamp for save shortcut
+        this.lastShortcutTime = 0;
+
         this.init();
     }
 
@@ -104,29 +113,51 @@ class ShortcutIndicators {
         this.observer = observer;
     }
 
+    cleanup() {
+        // Remove old event listeners before adding new ones
+        if (this.keydownHandler) {
+            document.removeEventListener('keydown', this.keydownHandler);
+        }
+        if (this.modifierKeydownHandler) {
+            document.removeEventListener('keydown', this.modifierKeydownHandler);
+        }
+        if (this.modifierKeyupHandler) {
+            document.removeEventListener('keyup', this.modifierKeyupHandler);
+        }
+        if (this.blurHandler) {
+            window.removeEventListener('blur', this.blurHandler);
+        }
+    }
+
     bindEvents() {
+        // Clean up old listeners first
+        this.cleanup();
+
         // Listen for modifier key press/release
-        document.addEventListener('keydown', (e) => {
+        this.modifierKeydownHandler = (e) => {
             if (e[this.modifierKey] && !this.isModifierPressed) {
                 this.isModifierPressed = true;
                 this.showShortcuts();
             }
-        });
+        };
+        document.addEventListener('keydown', this.modifierKeydownHandler);
 
-        document.addEventListener('keyup', (e) => {
+        this.modifierKeyupHandler = (e) => {
             if (!e[this.modifierKey] && this.isModifierPressed) {
                 this.isModifierPressed = false;
                 this.hideShortcuts();
             }
-        });
+        };
+        document.addEventListener('keyup', this.modifierKeyupHandler);
 
         // Handle window blur to reset state
-        window.addEventListener('blur', () => {
+        this.blurHandler = () => {
             if (this.isModifierPressed) {
                 this.isModifierPressed = false;
                 this.hideShortcuts();
             }
-        });
+        };
+        window.addEventListener('blur', this.blurHandler);
     }
 
     isLogoutButton(button) {
@@ -147,29 +178,41 @@ class ShortcutIndicators {
             'd': '[data-shortcut="d"]'      // Products (proDucts)
         };
 
-        document.addEventListener('keydown', (e) => {
+        // Store handler reference for cleanup
+        this.keydownHandler = (e) => {
             if (e[this.modifierKey]) {
                 const key = e.key.toLowerCase();
 
                 // Handle Cmd+S or Cmd+Shift+S for Save buttons
                 if (key === 's') {
                     e.preventDefault();
+                    e.stopImmediatePropagation(); // Prevent duplicate handlers from firing
                     this.handleSaveShortcut(e.shiftKey);
                     return;
                 }
 
                 if (shortcuts[key]) {
                     e.preventDefault();
+                    e.stopImmediatePropagation(); // Prevent duplicate handlers from firing
                     const element = document.querySelector(shortcuts[key]);
                     if (element) {
                         element.click();
                     }
                 }
             }
-        });
+        };
+
+        document.addEventListener('keydown', this.keydownHandler);
     }
 
     handleSaveShortcut(isShiftPressed = false) {
+        // Debounce: prevent execution if called within 500ms
+        const now = Date.now();
+        if (now - this.lastShortcutTime < 500) {
+            return; // Too soon, ignore
+        }
+        this.lastShortcutTime = now;
+
         let saveButton;
 
         if (isShiftPressed) {

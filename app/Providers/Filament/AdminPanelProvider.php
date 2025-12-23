@@ -62,7 +62,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->assets([
                 Css::make('admin-fixes', asset('css/admin-fixes.css')),
-                Js::make('app-js', asset('build/assets/app-D70hdtKS.js')),
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -78,6 +77,10 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
+            ->renderHook(
+                PanelsRenderHook::SCRIPTS_BEFORE,
+                fn (): string => Blade::render('@vite(\'resources/js/app.js\')')
+            )
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
                 fn (): string => Blade::render('
@@ -241,6 +244,58 @@ class AdminPanelProvider extends PanelProvider
                             initializeGlobalSearchSlideEffect();
                         });
                     });
+                </script>
+                <script>
+                    // Keyboard shortcuts - Add Payment (Cmd+Shift+P / Ctrl+Shift+P)
+                    document.addEventListener("keydown", function(e) {
+                        const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+                        const modifierKey = isMac ? e.metaKey : e.ctrlKey;
+
+                        if (modifierKey) {
+                            const key = e.key.toLowerCase();
+
+                            // Handle Cmd+Shift+P for Add to payments button
+                            if (key === "p" && e.shiftKey) {
+                                // Only work on invoice create/edit pages
+                                if (window.location.pathname.includes("/invoices/") &&
+                                    (window.location.pathname.includes("/create") || window.location.pathname.includes("/edit"))) {
+
+                                    // Prevent duplicate calls
+                                    const now = Date.now();
+                                    if (window.lastAddPaymentTime && (now - window.lastAddPaymentTime) < 500) {
+                                        return;
+                                    }
+                                    window.lastAddPaymentTime = now;
+
+                                    e.preventDefault();
+                                    e.stopImmediatePropagation();
+
+                                    // Find the main TableRepeater Add button
+                                    const paymentSection = document.querySelector("[data-payment-repeater=\"true\"]");
+
+                                    if (paymentSection) {
+                                        let mainAddBtn = null;
+                                        const allButtons = paymentSection.querySelectorAll("button");
+
+                                        for (const btn of allButtons) {
+                                            const text = btn.textContent?.trim().toLowerCase();
+                                            const isInTableRow = !!btn.closest("tr");
+
+                                            // Look for "Add" button NOT in a table row
+                                            if (!isInTableRow && text && text.includes("add")) {
+                                                mainAddBtn = btn;
+                                                break;
+                                            }
+                                        }
+
+                                        if (mainAddBtn && !mainAddBtn.disabled) {
+                                            mainAddBtn.click();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }, true); // Use capture phase to intercept before browser
                 </script>'
             );
     }

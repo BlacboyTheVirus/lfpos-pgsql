@@ -71,6 +71,12 @@ class ShortcutIndicators {
             else if (text === 'save' || text.startsWith('save ')) {
                 button.setAttribute('data-shortcut', 's');
             }
+            // Check if this is "Add to payments" button (Cmd+Shift+P)
+            else if ((text.includes('add') && text.includes('payment')) ||
+                     text === 'add to payments' ||
+                     text.startsWith('add to payment')) {
+                button.setAttribute('data-shortcut', 'shift+p');
+            }
         });
     }
 
@@ -191,6 +197,12 @@ class ShortcutIndicators {
                     return;
                 }
 
+                // Handle Cmd+Shift+P for Add to payments button - now handled in AdminPanelProvider
+                if (key === 'p' && e.shiftKey) {
+                    // Skip - handled by AdminPanelProvider inline script
+                    return;
+                }
+
                 if (shortcuts[key]) {
                     e.preventDefault();
                     e.stopImmediatePropagation(); // Prevent duplicate handlers from firing
@@ -203,6 +215,11 @@ class ShortcutIndicators {
         };
 
         document.addEventListener('keydown', this.keydownHandler);
+    }
+
+    handleAddPaymentShortcut() {
+        // This is now handled in AdminPanelProvider.php inline script
+        // Keeping this method for backwards compatibility but it's not used
     }
 
     handleSaveShortcut(isShiftPressed = false) {

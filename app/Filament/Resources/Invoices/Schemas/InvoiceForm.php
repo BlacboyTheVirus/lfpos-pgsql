@@ -409,6 +409,7 @@ class InvoiceForm
                                                     ->minItems(0)
                                                     ->extraAttributes([
                                                         'class' => 'payments-table',
+                                                        'data-payment-repeater' => 'true',
                                                     ])
                                                     ->schema([
                                                         DatePicker::make('payment_date')

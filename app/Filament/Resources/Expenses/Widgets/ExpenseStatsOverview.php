@@ -25,14 +25,15 @@ class ExpenseStatsOverview extends StatsOverviewWidget
 
     /**
      * Cache category totals to prevent redundant queries during Livewire re-renders.
-     * Uses unfiltered query to always show totals for ALL expenses regardless of category filter.
+     * Uses filtered query to respect table filters (date and category filters).
      * Caches for 5 minutes.
      */
-    #[Computed(persist: true, seconds: 300)]
+    #[Computed(seconds: 300)]
     public function cachedCategoryTotals(): array
     {
-        // Use base Expense query (unfiltered by category) to get totals for all expenses
-        $stats = Expense::query()
+        // Use filtered query to respect table filters (date range and category)
+        $stats = $this->getPageTableQuery()
+            ->reorder() // Clear ORDER BY clauses before aggregate query (required for PostgreSQL)
             ->selectRaw("
                 SUM(amount) as total_expenses,
                 SUM(CASE WHEN category = ? THEN amount ELSE 0 END) as materials_total,
@@ -97,8 +98,9 @@ class ExpenseStatsOverview extends StatsOverviewWidget
             // Show the selected category (Repairs & Cleaning or Miscellaneous)
             $categoryEnum = ExpenseCategory::from($selectedCategory);
 
-            // Calculate actual total for this category from database
-            $categoryTotal = Expense::query()
+            // Calculate actual total for this category using filtered query (respects date filters)
+            $categoryTotal = $this->getPageTableQuery()
+                ->reorder() // Clear ORDER BY before aggregate (PostgreSQL compatibility)
                 ->where('category', $selectedCategory)
                 ->sum('amount') / 100;
 
@@ -132,7 +134,7 @@ class ExpenseStatsOverview extends StatsOverviewWidget
      * Cache chart data for the last 7 days to prevent redundant queries.
      * Caches for 5 minutes.
      */
-    #[Computed(persist: true, seconds: 300)]
+    #[Computed(seconds: 300)]
     public function cachedChartData(): array
     {
         $startDate = now()->subDays(6)->toDateString();

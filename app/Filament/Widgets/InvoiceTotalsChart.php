@@ -8,6 +8,7 @@ use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
 
 class InvoiceTotalsChart extends ChartWidget
@@ -38,7 +39,7 @@ class InvoiceTotalsChart extends ChartWidget
     {
         $dateRange = $this->getDateRangeFromFilters();
 
-        if (!$dateRange['start'] || !$dateRange['end']) {
+        if (! $dateRange['start'] || ! $dateRange['end']) {
             return $this->getAllTimeChartData();
         }
 
@@ -65,8 +66,23 @@ class InvoiceTotalsChart extends ChartWidget
         $earliestDate = $this->getEarliestInvoiceDate();
 
         // If no invoices exist, show last 12 months as fallback
-        if (!$earliestDate) {
+        if (! $earliestDate) {
             $earliestDate = now()->subMonths(11)->startOfMonth();
+        }
+
+        // Add safeguard: limit chart to maximum 10 years of data to prevent performance issues
+        $maxMonths = 120; // 10 years
+        $monthsDiff = $earliestDate->diffInMonths(now());
+
+        if ($monthsDiff > $maxMonths) {
+            Log::info('InvoiceTotalsChart: Date range exceeds maximum', [
+                'earliest_date' => $earliestDate->toDateString(),
+                'months_diff' => $monthsDiff,
+                'limiting_to_years' => ($maxMonths / 12),
+            ]);
+
+            // Limit to last 10 years
+            $earliestDate = now()->subYears(10)->startOfMonth();
         }
 
         // Use single optimized query with DATE_TRUNC for PostgreSQL
@@ -125,13 +141,42 @@ class InvoiceTotalsChart extends ChartWidget
 
     /**
      * Get the date of the first invoice in the system.
-     * Returns null if no invoices exist.
+     * Returns null if no invoices exist or if the date is invalid.
      */
     protected function getEarliestInvoiceDate(): ?Carbon
     {
-        $firstInvoice = Invoice::orderBy('date', 'asc')->first();
+        $firstInvoice = Invoice::whereNotNull('date')
+            ->orderBy('date', 'asc')
+            ->first();
 
-        return $firstInvoice ? Carbon::parse($firstInvoice->date)->startOfMonth() : null;
+        if (! $firstInvoice) {
+            return null;
+        }
+
+        try {
+            $earliestDate = Carbon::parse($firstInvoice->date)->startOfMonth();
+
+            // Validate that the date is reasonable (not before year 1900)
+            if ($earliestDate->year < 1900) {
+                Log::warning('InvoiceTotalsChart: Found invoice with unrealistic date', [
+                    'invoice_id' => $firstInvoice->id,
+                    'date' => $firstInvoice->date,
+                ]);
+
+                // Return null to trigger the fallback (last 12 months)
+                return null;
+            }
+
+            return $earliestDate;
+        } catch (\Exception $e) {
+            Log::error('InvoiceTotalsChart: Error parsing invoice date', [
+                'invoice_id' => $firstInvoice->id,
+                'date' => $firstInvoice->date,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     protected function getDateRangeChartData(string $startDate, string $endDate): array
@@ -260,7 +305,7 @@ class InvoiceTotalsChart extends ChartWidget
                 'tooltip' => [
                     'mode' => 'index',
                     'intersect' => true,
-                ]
+                ],
             ],
             'scales' => [
                 'x' => [

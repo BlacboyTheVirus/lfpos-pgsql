@@ -12,6 +12,5 @@
         "phpstorm",
         "vscode"
     ],
-    "guidelines": [],
-    "herd_mcp": true
+    "guidelines": []
 }

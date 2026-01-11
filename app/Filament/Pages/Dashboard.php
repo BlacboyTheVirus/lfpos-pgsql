@@ -10,7 +10,6 @@ use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
-use Illuminate\Contracts\View\View;
 
 class Dashboard extends BaseDashboard
 {
@@ -51,8 +50,8 @@ class Dashboard extends BaseDashboard
         );
 
         return $settings['currency_position'] === 'before'
-            ? $settings['currency_symbol'] . ' ' . $formatted
-            : $formatted . ' ' . $settings['currency_symbol'];
+            ? $settings['currency_symbol'].' '.$formatted
+            : $formatted.' '.$settings['currency_symbol'];
     }
 
     public function getWidgets(): array
@@ -78,6 +77,7 @@ class Dashboard extends BaseDashboard
                         'this_week' => 'This Week',
                         'last_month' => 'Last 30 Days',
                         'this_month' => 'This Month',
+                        'last_year' => 'Last Year',
                         'this_year' => 'This Year',
                         'all' => 'All',
                         'custom' => 'Custom',
@@ -134,6 +134,9 @@ class Dashboard extends BaseDashboard
 
             case 'this_month':
                 return Carbon::now()->format('M Y');
+
+            case 'last_year':
+                return Carbon::now()->subYear()->format('Y');
 
             case 'this_year':
                 return Carbon::now()->format('Y');

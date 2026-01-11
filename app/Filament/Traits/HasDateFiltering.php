@@ -44,6 +44,12 @@ trait HasDateFiltering
                     'end' => Carbon::now()->endOfMonth()->toDateString(),
                 ];
 
+            case 'last_year':
+                return [
+                    'start' => Carbon::now()->subYear()->startOfYear()->toDateString(),
+                    'end' => Carbon::now()->subYear()->endOfYear()->toDateString(),
+                ];
+
             case 'this_year':
                 return [
                     'start' => Carbon::now()->startOfYear()->toDateString(),
@@ -106,6 +112,13 @@ trait HasDateFiltering
                 $query->whereBetween($dateColumn, [
                     Carbon::now()->startOfMonth(),
                     Carbon::now()->endOfMonth(),
+                ]);
+                break;
+
+            case 'last_year':
+                $query->whereBetween($dateColumn, [
+                    Carbon::now()->subYear()->startOfYear(),
+                    Carbon::now()->subYear()->endOfYear(),
                 ]);
                 break;
 
@@ -177,6 +190,13 @@ trait HasDateFiltering
                 $query->whereBetween($dateColumn, [
                     Carbon::now()->subMonth()->startOfMonth(),
                     Carbon::now()->subMonth()->endOfMonth(),
+                ]);
+                break;
+
+            case 'last_year':
+                $query->whereBetween($dateColumn, [
+                    Carbon::now()->subYears(2)->startOfYear(),
+                    Carbon::now()->subYears(2)->endOfYear(),
                 ]);
                 break;
 

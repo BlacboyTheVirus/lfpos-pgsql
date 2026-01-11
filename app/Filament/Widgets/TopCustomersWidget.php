@@ -6,13 +6,23 @@ use App\Filament\Pages\Dashboard;
 use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Traits\HasDateFiltering;
 use App\Models\Customer;
+use App\Models\Invoice;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use Carbon\Carbon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Log;
 
+/**
+ * Top Customers Widget
+ *
+ * Displays the top 10 customers by revenue for the selected date range.
+ * When "All" is selected, shows data from the earliest invoice to today.
+ * Walk-in customers (codes ending with 0001) are excluded.
+ */
 class TopCustomersWidget extends BaseWidget
 {
     use HasDateFiltering;
@@ -38,14 +48,14 @@ class TopCustomersWidget extends BaseWidget
     {
         $dateRange = $this->getDateRangeFromFilters();
 
-        // Always apply date filtering - if no specific range, use last 12 months
+        // Handle date filtering based on selected range
         if ($dateRange['start'] && $dateRange['end']) {
-            // Custom date range
+            // Custom date range specified
             $startDate = $dateRange['start'];
             $endDate = $dateRange['end'];
         } else {
-            // Default to last 12 months if no range specified
-            $startDate = now()->subMonths(12)->startOfMonth()->toDateString();
+            // "All" option selected - get earliest invoice date
+            $startDate = $this->getEarliestInvoiceDate();
             $endDate = now()->endOfMonth()->toDateString();
         }
 
@@ -91,7 +101,7 @@ class TopCustomersWidget extends BaseWidget
                     ->searchable()
                     ->sortable()
                     ->url(function ($record) {
-                        return CustomerResource::getUrl('index') . '?tableAction=view&tableActionRecord=' . $record->id;
+                        return CustomerResource::getUrl('index').'?tableAction=view&tableActionRecord='.$record->id;
                     })
                     ->openUrlInNewTab(false),
 
@@ -113,7 +123,61 @@ class TopCustomersWidget extends BaseWidget
             ->defaultPaginationPageOption(5)
             ->striped()
             ->recordUrl(function ($record) {
-                return CustomerResource::getUrl('index') . '?tableAction=view&tableActionRecord=' . $record->id;
+                return CustomerResource::getUrl('index').'?tableAction=view&tableActionRecord='.$record->id;
             });
+    }
+
+    /**
+     * Get the date of the first invoice in the system.
+     * Returns a date string for the earliest invoice, or last 12 months if none exist.
+     */
+    protected function getEarliestInvoiceDate(): string
+    {
+        $firstInvoice = Invoice::whereNotNull('date')
+            ->orderBy('date', 'asc')
+            ->first();
+
+        if (! $firstInvoice) {
+            // No invoices exist, fallback to last 12 months
+            return now()->subMonths(12)->startOfMonth()->toDateString();
+        }
+
+        try {
+            $earliestDate = Carbon::parse($firstInvoice->date)->startOfMonth();
+
+            // Validate date is reasonable (not before year 1900)
+            if ($earliestDate->year < 1900) {
+                Log::warning('TopCustomersWidget: Found invoice with unrealistic date', [
+                    'invoice_id' => $firstInvoice->id,
+                    'date' => $firstInvoice->date,
+                ]);
+
+                return now()->subMonths(12)->startOfMonth()->toDateString();
+            }
+
+            // Add safeguard: limit to maximum 10 years of data
+            $maxMonths = 120; // 10 years
+            $monthsDiff = $earliestDate->diffInMonths(now());
+
+            if ($monthsDiff > $maxMonths) {
+                Log::info('TopCustomersWidget: Date range exceeds maximum', [
+                    'earliest_date' => $earliestDate->toDateString(),
+                    'months_diff' => $monthsDiff,
+                    'limiting_to_years' => 10,
+                ]);
+
+                return now()->subYears(10)->startOfMonth()->toDateString();
+            }
+
+            return $earliestDate->toDateString();
+        } catch (\Exception $e) {
+            Log::error('TopCustomersWidget: Error parsing invoice date', [
+                'invoice_id' => $firstInvoice->id,
+                'date' => $firstInvoice->date,
+                'error' => $e->getMessage(),
+            ]);
+
+            return now()->subMonths(12)->startOfMonth()->toDateString();
+        }
     }
 }

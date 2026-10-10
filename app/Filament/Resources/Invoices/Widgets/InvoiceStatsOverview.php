@@ -13,7 +13,7 @@ class InvoiceStatsOverview extends StatsOverviewWidget
 
     protected static bool $isLazy = false;
 
-    public ?string $pollingInterval = '1s';
+    public ?string $pollingInterval = '300s';
 
     protected function getTablePage(): string
     {

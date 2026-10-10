@@ -19,6 +19,8 @@ class ProductRevenueChart extends ChartWidget
 
     protected static ?int $sort = 3;
 
+    protected ?string $pollingInterval = '300s';
+
     protected int|string|array $columnSpan = [
         'default' => 'full',
         'sm' => 'full',

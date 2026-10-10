@@ -7,7 +7,6 @@ use App\Filament\Traits\HasDateFiltering;
 use App\Models\Expense;
 use App\Models\Invoice;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
-use Carbon\Carbon;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -21,6 +20,8 @@ class DashboardStatsWidget extends BaseWidget
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 1;
+
+    protected ?string $pollingInterval = '300s';
 
     protected int|string|array $columnSpan = [
         'default' => 'full',
@@ -206,7 +207,7 @@ class DashboardStatsWidget extends BaseWidget
 
     protected function formatNumber($number, $isCurrency = true): string
     {
-        if (!$isCurrency) {
+        if (! $isCurrency) {
             return number_format($number);
         }
 

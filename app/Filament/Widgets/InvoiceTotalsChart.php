@@ -19,6 +19,8 @@ class InvoiceTotalsChart extends ChartWidget
 
     protected static ?int $sort = 2;
 
+    protected ?string $pollingInterval = '300s';
+
     protected ?string $heading = 'Invoice Totals';
 
     protected int|string|array $columnSpan = [

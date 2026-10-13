@@ -720,7 +720,7 @@ class InvoiceForm
 
         // Round off to nearest 100 (10000 cents)
         $roundedAmount = round($finalAmount / 100) * 100;
-        $roundOff = $roundedAmount - $finalAmount;
+        $roundOff = $roundedAmount - $afterDiscount;
 
         // Set values (no comma formatting to avoid issues with MoneyCast)
         $set('subtotal', number_format($subtotal, 0, '.', ''));

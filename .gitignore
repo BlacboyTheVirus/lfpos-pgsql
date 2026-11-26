@@ -2,6 +2,7 @@
 .DS_Store
 .env
 .env.backup
+.env.before_lerd
 .env.production
 .phpactor.json
 .phpunit.result.cache
@@ -9,6 +10,7 @@
 /.idea
 /.nova
 /.phpunit.cache
+/.serena
 /.vscode
 /.zed
 /auth.json

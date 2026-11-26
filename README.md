@@ -77,7 +77,7 @@ This runs the web server, queue worker, log viewer and Vite together. The app re
 The seeder creates a super admin account:
 
 - Email: `superadmin@lfpos.com`
-- Password: `Password1`
+- Password: `Pw.1`
 
 **Change this password straight away on any server other than your own machine.**
 

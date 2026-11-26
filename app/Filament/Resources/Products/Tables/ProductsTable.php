@@ -79,6 +79,11 @@ class ProductsTable
                     ->alignment('right')
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                TextColumn::make('default_dimensions')
+                    ->label('Default Size (W × H)')
+                    ->state(fn ($record): string => "{$record->default_width} × {$record->default_height}")
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean()

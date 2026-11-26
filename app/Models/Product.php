@@ -16,6 +16,7 @@ class Product extends Model
         'price',
         'minimum_amount',
         'default_width',
+        'default_height',
         'description',
         'is_active',
         'created_by',
@@ -44,6 +45,7 @@ class Product extends Model
             'price' => MoneyCast::class,
             'minimum_amount' => MoneyCast::class,
             'default_width' => 'decimal:2',
+            'default_height' => 'decimal:2',
             'is_active' => 'boolean',
         ];
     }
@@ -74,7 +76,7 @@ class Product extends Model
 
         return \Cache::remember($cacheKey, 3600, function () {
             return static::active()
-                ->select(['id', 'code', 'name', 'unit', 'price', 'minimum_amount', 'default_width'])
+                ->select(['id', 'code', 'name', 'unit', 'price', 'minimum_amount', 'default_width', 'default_height'])
                 ->orderBy('name')
                 ->get();
         });

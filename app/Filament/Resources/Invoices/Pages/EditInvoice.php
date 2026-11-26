@@ -44,7 +44,7 @@ class EditInvoice extends EditRecord
         ];
     }
 
-    public function addProductToForm($productId, $productName, $unitPrice, $defaultWidth, $minimumAmount): void
+    public function addProductToForm(int $productId, string $productName, float|int $unitPrice, float|int|string $defaultWidth, float|int|string $defaultHeight, float|int $minimumAmount): void
     {
         // Get the actual current form state (includes all relationship data)
         $formState = $this->form->getRawState();
@@ -56,11 +56,11 @@ class EditInvoice extends EditRecord
             'product_id' => $productId,
             'product_name' => $productName,
             'width' => $defaultWidth,
-            'height' => 1.0,
+            'height' => $defaultHeight,
             'unit_price' => $unitPrice,
             'quantity' => 1,
             'minimum_amount' => $minimumAmount,
-            'product_amount' => number_format($defaultWidth * 1.0 * $unitPrice * 1, 0, '.', ''),
+            'product_amount' => number_format((float) $defaultWidth * (float) $defaultHeight * $unitPrice * 1, 0, '.', ''),
         ];
 
         $currentProducts[] = $newProduct;

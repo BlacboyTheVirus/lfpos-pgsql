@@ -87,6 +87,27 @@ class ProductForm
                                     ->prefix($currencySymbol),
                             ]),
 
+                        Grid::make(2)
+                            ->schema([
+                                TextInput::make('default_width')
+                                    ->label('Default Width')
+                                    ->required()
+                                    ->numeric()
+                                    ->minValue(0.01)
+                                    ->step(0.01)
+                                    ->default(1)
+                                    ->helperText('Pre-filled width when this product is added to an invoice'),
+
+                                TextInput::make('default_height')
+                                    ->label('Default Height')
+                                    ->required()
+                                    ->numeric()
+                                    ->minValue(0.01)
+                                    ->step(0.01)
+                                    ->default(1)
+                                    ->helperText('Pre-filled height when this product is added to an invoice'),
+                            ]),
+
                         Textarea::make('description')
                             ->label('Description')
                             ->placeholder('Enter product description (optional)')

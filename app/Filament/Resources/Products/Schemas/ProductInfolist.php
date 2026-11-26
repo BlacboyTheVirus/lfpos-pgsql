@@ -77,6 +77,10 @@ class ProductInfolist
                                     ->badge()
                                     ->color('warning')
                                     ->alignment('right'),
+
+                                TextEntry::make('default_dimensions')
+                                    ->label('Default Dimensions (W × H)')
+                                    ->state(fn ($record): string => "{$record->default_width} × {$record->default_height}"),
                             ]),
 
                         TextEntry::make('description')

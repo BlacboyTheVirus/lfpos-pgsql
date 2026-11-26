@@ -49,22 +49,6 @@ String-backed enum for expense categorization and reporting.
 - `getIcon()` - Heroicon icons for categories
 - `getDefault()` - Returns Miscellaneous as default
 
-### ProductDefault
-String-backed enum for predefined product types with dimensions and pricing.
-
-**Cases:**
-- `SAV` - Self-Adhesive Vinyl (1×1 sqm, ₦1,500)
-- `FLEX` - Flexible Banner Material (2×1 sqm, ₦1,200)
-- `TRANSPARENT` - Transparent Vinyl (1×1 sqm, ₦2,000)
-
-**Key Methods:**
-- `getLabel()` - Product type labels
-- `getDescription()` - Detailed descriptions
-- `getDefaultDimensions()` - Default width/height/unit
-- `getTypicalPrice()` - Typical prices in cents
-- `getColor()` - UI color coding
-- `getIcon()` - Heroicon icons
-
 ## Usage Examples
 
 ### In Models
@@ -111,10 +95,6 @@ $rules = [
 ```php
 // Calculate invoice status
 $status = InvoiceStatus::calculateStatus($invoice->total, $invoice->paid);
-
-// Get product defaults
-$defaults = ProductDefault::SAV->getDefaultDimensions();
-$price = ProductDefault::SAV->getTypicalPrice();
 
 // Payment type colors for UI
 $color = PaymentType::Cash->getColor(); // 'success'

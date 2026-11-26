@@ -3,7 +3,6 @@
 use App\Enums\ExpenseCategory;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentType;
-use App\Enums\ProductDefault;
 
 test('payment type enum has correct cases and methods', function () {
     $cases = PaymentType::cases();
@@ -62,34 +61,6 @@ test('expense category enum has correct cases and methods', function () {
     expect($options)->toHaveKey('materials', 'Materials');
 });
 
-test('product default enum has correct cases and dimensions', function () {
-    $cases = ProductDefault::cases();
-
-    expect($cases)->toHaveCount(3);
-    expect(ProductDefault::SAV->getLabel())->toBe('SAV');
-    expect(ProductDefault::FLEX->getLabel())->toBe('FLEX');
-    expect(ProductDefault::TRANSPARENT->getLabel())->toBe('Transparent');
-
-    expect(ProductDefault::SAV->getDescription())->toBe('Self-Adhesive Vinyl');
-    expect(ProductDefault::FLEX->getDescription())->toBe('Flexible Banner Material');
-    expect(ProductDefault::TRANSPARENT->getDescription())->toBe('Transparent Vinyl');
-
-    // Test default dimensions
-    $savDimensions = ProductDefault::SAV->getDefaultDimensions();
-    expect($savDimensions)->toHaveKey('width', 1.0);
-    expect($savDimensions)->toHaveKey('height', 1.0);
-    expect($savDimensions)->toHaveKey('unit', 'sqm');
-
-    $flexDimensions = ProductDefault::FLEX->getDefaultDimensions();
-    expect($flexDimensions)->toHaveKey('width', 2.0);
-    expect($flexDimensions)->toHaveKey('height', 1.0);
-
-    // Test typical prices
-    expect(ProductDefault::SAV->getTypicalPrice())->toBe(150000); // ₦1,500
-    expect(ProductDefault::FLEX->getTypicalPrice())->toBe(120000); // ₦1,200
-    expect(ProductDefault::TRANSPARENT->getTypicalPrice())->toBe(200000); // ₦2,000
-});
-
 test('all enums are string-backed', function () {
     expect(PaymentType::Cash)->toBeInstanceOf(PaymentType::class);
     expect(PaymentType::Cash->value)->toBe('cash');
@@ -99,7 +70,4 @@ test('all enums are string-backed', function () {
 
     expect(ExpenseCategory::Miscellaneous)->toBeInstanceOf(ExpenseCategory::class);
     expect(ExpenseCategory::Miscellaneous->value)->toBe('miscellaneous');
-
-    expect(ProductDefault::SAV)->toBeInstanceOf(ProductDefault::class);
-    expect(ProductDefault::SAV->value)->toBe('sav');
 });
